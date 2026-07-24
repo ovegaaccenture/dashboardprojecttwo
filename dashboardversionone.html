@@ -1,685 +1,461 @@
 <html lang="es"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard de Sprints</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<title>Dashboard Sprints GloMo MX</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh;display:flex;flex-direction:column}
-header{background:#fff;border-bottom:0.5px solid #e0e0dc;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;position:sticky;top:0;z-index:100}
-header h1{font-size:17px;font-weight:500}
-.header-right{display:flex;align-items:center;gap:12px}
-.upload-btn{border:0.5px solid #ccc;border-radius:6px;padding:6px 14px;font-size:12px;color:#555;cursor:pointer;transition:all 0.2s;background:#fff}
-.upload-btn:hover{border-color:#185FA5;color:#185FA5;background:#f0f6ff}
-.upload-btn.loaded{border-color:#3B6D11;color:#3B6D11;background:#f0f7e8}
-.export-btn{border:0.5px solid #3B6D11;border-radius:6px;padding:6px 14px;font-size:12px;color:#3B6D11;cursor:pointer;background:#f0f7e8;font-weight:600;display:none}
-.export-btn:hover{background:#d8f0c4}
-.upload-btn input{display:none}
-nav{width:220px;flex-shrink:0;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;padding:1.5rem 1rem;border-right:0.5px solid #e0e0dc;background:#fff}
-nav h2{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#aaa;margin-bottom:0.75rem;padding-left:8px}
-.nav-item{display:block;padding:6px 10px;font-size:12px;color:#555;border-radius:6px;cursor:pointer;margin-bottom:2px;transition:all 0.15s;text-decoration:none;border:none;background:none;width:100%;text-align:left}
-.nav-item:hover{background:#f5f5f3;color:#1a1a1a}
-.nav-item.active{background:#e6f1fb;color:#185FA5;font-weight:500}
-.main-layout{display:flex;flex:1}
-.content{flex:1;min-width:0;padding:1.5rem 2rem}
-.container{max-width:900px;margin:0 auto}
-.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
-.metric{background:#fff;border-radius:8px;padding:14px 16px;border:0.5px solid #e8e8e4;position:relative}
-.metric-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.04em}
-.metric-val{font-size:24px;font-weight:500}
-.metric-val.green{color:#3B6D11}.metric-val.red{color:#A32D2D}.metric-val.amber{color:#854F0B}.metric-val.purple{color:#3C3489}
-.metric-delta{font-size:11px;margin-top:4px;font-weight:500}
-.metric-delta.up{color:#3B6D11}.metric-delta.down{color:#A32D2D}.metric-delta.neutral{color:#888}
-.section{background:#fff;border-radius:10px;border:0.5px solid #e8e8e4;padding:1.25rem 1.5rem;margin-bottom:1.25rem;scroll-margin-top:80px}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.section-title{font-size:14px;font-weight:500}
-.section-count{font-size:11px;color:#888;background:#f5f5f3;padding:2px 8px;border-radius:6px}
-.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:11px;color:#666}
-.legend span{display:flex;align-items:center;gap:4px}
-.lsq{width:10px;height:10px;border-radius:2px;display:inline-block}
-.lln{width:18px;height:0;display:inline-block}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;display:flex;min-height:100vh}
+#sidebar{width:220px;min-width:220px;background:#fff;border-right:0.5px solid #e0e0dc;position:sticky;top:0;height:100vh;overflow-y:auto;padding:16px 0;flex-shrink:0}
+#sidebar h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;padding:0 16px 10px}
+#sidebar a{display:block;padding:7px 16px;font-size:12px;color:#444;text-decoration:none;border-left:2px solid transparent;transition:all .15s}
+#sidebar a:hover,#sidebar a.active{background:#f5f5f3;color:#185FA5;border-left-color:#185FA5}
+#sidebar .sep{height:1px;background:#f0f0ec;margin:8px 0}
+#main{flex:1;padding:24px;max-width:calc(100vw - 220px);overflow-x:hidden}
+header{background:#fff;border-bottom:0.5px solid #e0e0dc;padding:14px 24px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:12px;margin:-24px -24px 24px}
+header h1{font-size:16px;font-weight:700}
+header span{font-size:12px;color:#888;margin-left:auto}
+.section{background:#fff;border:0.5px solid #e8e8e4;border-radius:10px;padding:20px;margin-bottom:20px}
+.sec-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.sec-header h2{font-size:14px;font-weight:700}
+.sec-header .total{font-size:11px;color:#888}
+.sub{font-size:11px;color:#888;margin-bottom:10px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;align-items:center}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#444}
+.leg-box{width:22px;height:10px;border-radius:2px;flex-shrink:0}
+.leg-line{width:22px;height:0;border-top:2px solid;flex-shrink:0}
+.leg-line-dash{width:22px;height:0;border-top:2px dashed;flex-shrink:0}
+.leg-line-dot{width:22px;height:0;border-top:2px dotted;flex-shrink:0}
 .chart-wrap{position:relative;width:100%}
-.pct-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.pct-pill{display:flex;align-items:center;gap:4px;font-size:11px;background:#f5f5f3;padding:3px 8px;border-radius:5px}
-.team-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.team-card{background:#f5f5f3;border-radius:8px;padding:14px}
-.team-label{font-size:11px;color:#888;margin-bottom:4px}
-.team-val{font-size:24px;font-weight:500;margin-bottom:2px}
-.filter-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.fbtn{padding:4px 12px;font-size:11px;border-radius:20px;border:0.5px solid #ccc;background:#fff;color:#666;cursor:pointer;transition:all 0.15s}
-.fbtn.active{background:#e6f1fb;color:#185FA5;border-color:#185FA5;font-weight:500}
-.chart-sub{font-size:11px;color:#888;margin-bottom:10px}
-.trend-line{stroke-dasharray:5,3}
-#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;gap:1rem;padding:2rem}
-#upload-screen h2{font-size:22px;font-weight:500}
-#upload-screen p{font-size:13px;color:#888;max-width:420px;line-height:1.6}
-.upload-big{border:2px dashed #ddd;border-radius:14px;padding:2.5rem 3.5rem;cursor:pointer;transition:all 0.2s;display:inline-block}
-.upload-big:hover{border-color:#185FA5;background:#f0f6ff}
-.upload-big input{display:none}
-.upload-big .icon{font-size:40px;margin-bottom:0.75rem}
-.upload-big .label{font-size:14px;color:#185FA5;font-weight:500;margin-bottom:4px}
-.upload-big .hint{font-size:12px;color:#aaa}
-#dashboard{display:none}
-.alert{background:#fff8e6;border:0.5px solid #f5c518;border-radius:8px;padding:10px 14px;font-size:12px;color:#854F0B;margin-bottom:1rem}
-.divider-sm{height:0.5px;background:#f0f0ec;margin:1rem 0}
-footer{text-align:center;padding:1.5rem;font-size:11px;color:#bbb;border-top:0.5px solid #e8e8e4;background:#fff;margin-top:auto}
-@media(max-width:768px){
-  nav{display:none}
-  .metric-grid{grid-template-columns:repeat(2,1fr)}
-  .team-cards{grid-template-columns:1fr}
-  .content{padding:1rem}
-}
+.gap-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pill{padding:4px 10px;border-radius:16px;font-size:11px;font-weight:600}
+.pill.green{background:#D1FAE5;color:#065F46}
+.pill.yellow{background:#FEF3C7;color:#92400E}
+.pill.red{background:#FEE2E2;color:#7F1D1D}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.metric-card{background:#f9f9f7;border:0.5px solid #e8e8e4;border-radius:8px;padding:14px;text-align:center}
+.metric-card .val{font-size:28px;font-weight:700;line-height:1}
+.metric-card .lbl{font-size:11px;color:#666;margin-top:4px}
+.team-bar{display:flex;height:32px;border-radius:6px;overflow:hidden;margin-bottom:8px}
+.team-bar .seg{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filter-btn{padding:4px 12px;border-radius:16px;border:1px solid #ddd;background:#fff;font-size:12px;cursor:pointer;transition:all .15s}
+.filter-btn:hover{border-color:#185FA5;color:#185FA5}
+.filter-btn.active{background:#185FA5;color:#fff;border-color:#185FA5}
 </style>
 </head>
 <body>
 
+<nav id="sidebar">
+  <h2>GloMo MX</h2>
+  <a href="#sec-metrics" class="active">📊 Métricas Generales</a>
+  <a href="#sec-equipo" class="">👥 Distribución Equipo</a>
+  <div class="sep"></div>
+  <a href="#sec-gen-estatus" class="">📈 Estatus General</a>
+  <a href="#sec-gen-gap" class="">🎯 GAP General</a>
+  <div class="sep"></div>
+  <a href="#sec-sp-estatus" class="">📈 Estatus por Sprint</a>
+  <a href="#sec-sp-gap" class="">🎯 GAP por Sprint</a>
+  <div class="sep"></div>
+  <a href="#sec-analisis" class="">🔍 Análisis</a>
+  <a href="#sec-validacion" class="">✅ Validación</a>
+  <div class="sep"></div>
+  <a href="#sec-local-sprint" class="">🧑‍💻 Equipo Local</a>
+  <div class="sep"></div>
+  <a href="#sec-hw-analisis" class="">⏱ Retraso Análisis</a>
+  <a href="#sec-hw-validacion" class="">⏱ Retraso Validación</a>
+</nav>
+
+<div id="main">
 <header>
-  <h1>📊 Dashboard de sprints</h1>
-  <div class="header-right">
-    <span id="file-name" style="font-size:12px;color:#888">ArchivoBaseDatos.xlsx</span>
-    <label class="upload-btn loaded" id="header-upload-label">
-      📂 Cargar Excel
-      <input type="file" accept=".xlsx,.xls" onchange="loadFile(this)">
-    </label>
-    <button class="export-btn" id="exportBtn" onclick="exportSnapshot()" style="display: inline-block;">⬇ Exportar snapshot</button>
-  </div>
+  <h1>Dashboard Sprints — GloMo MX</h1>
+  <span>Generado 2026-07-24</span>
 </header>
 
-<div class="main-layout">
+<!-- 1. Métricas generales -->
+<div class="section" id="sec-metrics">
+  <div class="sec-header"><h2>Métricas Generales</h2></div>
+  <p class="sub">Hoja: estatus general</p>
+  <div class="metrics-grid" id="metricsGrid"><div class="metric-card"><div class="val" style="color:#185FA5">252</div><div class="lbl">Total</div></div><div class="metric-card"><div class="val" style="color:#3a7d0a">177</div><div class="lbl">Accepted</div></div><div class="metric-card"><div class="val" style="color:#E24B4A">30</div><div class="lbl">Discarded</div></div><div class="metric-card"><div class="val" style="color:#7F77DD">15</div><div class="lbl">Blocked</div></div><div class="metric-card"><div class="val" style="color:#EF9F27">3</div><div class="lbl">In Progress</div></div><div class="metric-card"><div class="val" style="color:#185FA5">6</div><div class="lbl">Ready To Verify</div></div><div class="metric-card"><div class="val" style="color:#1D9E75">3</div><div class="lbl">Analysing</div></div><div class="metric-card"><div class="val" style="color:#D85A30">6</div><div class="lbl">To Rework+Test</div></div><div class="metric-card"><div class="val" style="color:#444">177</div><div class="lbl">Local</div></div><div class="metric-card"><div class="val" style="color:#888">74</div><div class="lbl">Global</div></div></div>
+</div>
 
-  <!-- Nav lateral -->
-  <nav id="sidebar" style="display: block;">
-    <h2>Secciones</h2>
-    <button class="nav-item active" onclick="scrollTo('sec-metricas')">Métricas generales</button>
-    <button class="nav-item" onclick="scrollTo('sec-equipo')">Distribución por equipo</button>
-    <button class="nav-item" onclick="scrollTo('sec-eg')">Estatus general</button>
-    <button class="nav-item" onclick="scrollTo('sec-gap-general')">GAP General</button>
-    <button class="nav-item" onclick="scrollTo('sec-eps')">Estatus por sprint</button>
-    <button class="nav-item" onclick="scrollTo('sec-gap-sprint')">GAP por sprint</button>
-    <button class="nav-item" onclick="scrollTo('sec-analisis')">Análisis</button>
-    <button class="nav-item" onclick="scrollTo('sec-validacion')">Validación</button>
-    <button class="nav-item" onclick="scrollTo('sec-local')">Equipo local</button>
-    <button class="nav-item" onclick="scrollTo('sec-delay-a')">Retraso análisis</button>
-    <button class="nav-item" onclick="scrollTo('sec-delay-v')">Retraso validación</button>
-  </nav>
+<!-- 2. Distribución equipo -->
+<div class="section" id="sec-equipo">
+  <div class="sec-header"><h2>Distribución por Equipo</h2></div>
+  <p class="sub">Local vs Global — hoja estatus general</p>
+  <div class="team-bar" id="teamBar"><div class="seg" style="width:70.5%;background:#185FA5">70.5% Local</div><div class="seg" style="width:29.5%;background:#1D9E75">29.5% Global</div></div>
+  <div id="teamLegend" style="font-size:12px;color:#555;display:flex;gap:16px"><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#185FA5;display:inline-block"></span>Local (177)</span><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block"></span>Global (74)</span></div>
+</div>
 
-  <div class="content">
-    <div class="container">
+<!-- 3. Estatus general -->
+<div class="section" id="sec-gen-estatus">
+  <div class="sec-header"><h2>Estatus General</h2><span class="total" id="genStatusTotal">252 registros</span></div>
+  <div class="chart-legend" id="legendGenStatus"><div class="leg-item"><div class="leg-box" style="background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.4)"></div>Q1</div><div class="leg-item"><div class="leg-box" style="background:rgba(29,158,117,0.2);border:1px solid rgba(29,158,117,0.4)"></div>Q2</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px solid #3a7d0a;flex-shrink:0"></div>Accepted</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #E24B4A;flex-shrink:0"></div>Discarded</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #AAAAAA;flex-shrink:0"></div>New</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #7F77DD;flex-shrink:0"></div>Blocked</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #185FA5;flex-shrink:0"></div>Ready To Verify</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #1D9E75;flex-shrink:0"></div>Analysing</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #EF9F27;flex-shrink:0"></div>In Progress</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #5BC0DE;flex-shrink:0"></div>Ready</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #888888;flex-shrink:0"></div>Test</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #20C997;flex-shrink:0"></div>Deployed</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #D85A30;flex-shrink:0"></div>To Rework</div></div>
+  <div class="chart-wrap" style="height:340px"><canvas id="genStatusChart" width="1595" height="340" style="display: block; box-sizing: border-box; height: 340px; width: 1595px;"></canvas></div>
+</div>
 
-      <!-- Pantalla de carga -->
-      <div id="upload-screen" style="display: none;">
-        <h2>Carga tu archivo Excel</h2>
-        <p>El dashboard detecta automáticamente las hojas y genera todas las gráficas. Los datos se procesan en tu navegador — nunca salen de tu computadora.</p>
-        <label class="upload-big">
-          <input type="file" accept=".xlsx,.xls" onchange="loadFile(this)">
-          <div class="icon">📊</div>
-          <div class="label">Seleccionar archivo Excel</div>
-          <div class="hint">versionEditadaConDatosFinales.xlsx o similar</div>
-        </label>
-        <p style="font-size:11px;color:#ccc;margin-top:0.5rem">Privado · sin conexión al servidor</p>
-      </div>
+<!-- 4. GAP General -->
+<div class="section" id="sec-gen-gap">
+  <div class="sec-header"><h2>GAP General</h2><span class="total" id="genGapTotal">252 registros</span></div>
+  <div class="chart-legend" id="legendGenGap"><div class="leg-item"><div class="leg-box" style="background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.4)"></div>Total por sprint</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px solid #3a7d0a;flex-shrink:0"></div>Tareas entregadas</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed rgba(120,120,120,0.6);flex-shrink:0"></div>Tendencia</div></div>
+  <div class="gap-pills" id="genGapPills"><span class="pill green">Q1 Sprint 1 <b style="color:#065F46">100%</b></span><span class="pill green">Q1 Sprint 2 <b style="color:#065F46">92.3%</b></span><span class="pill green">Q1 Sprint 3 <b style="color:#065F46">90.9%</b></span><span class="pill green">Q1 Sprint 4 <b style="color:#065F46">100%</b></span><span class="pill green">Q1 Sprint 5 <b style="color:#065F46">88.9%</b></span><span class="pill green">Q1 Sprint 6 <b style="color:#065F46">100%</b></span><span class="pill green">Q2 Sprint 1 <b style="color:#065F46">88.9%</b></span><span class="pill green">Q2 Sprint 2 <b style="color:#065F46">87.5%</b></span><span class="pill green">Q2 Sprint 3 <b style="color:#065F46">88.9%</b></span><span class="pill green">Q2 Sprint 4 <b style="color:#065F46">94.4%</b></span><span class="pill green">Q2 Sprint 5 <b style="color:#065F46">84.2%</b></span><span class="pill green">Q2 Sprint 6+St <b style="color:#065F46">86.1%</b></span><span class="pill yellow">Q3 Sprint 1 <b style="color:#92400E">54.2%</b></span><span class="pill red">Q3 Sprint 2 <b style="color:#7F1D1D">43.8%</b></span></div>
+  <div class="chart-wrap" style="height:320px"><canvas id="genGapChart" width="1595" height="320" style="display: block; box-sizing: border-box; height: 320px; width: 1595px;"></canvas></div>
+</div>
 
-      <!-- Dashboard -->
-      <div id="dashboard" style="display: block;">
+<!-- 5. Estatus por sprint -->
+<div class="section" id="sec-sp-estatus">
+  <div class="sec-header"><h2>Estatus General por Sprint</h2><span class="total" id="spStatusTotal">252 registros</span></div>
+  <div class="chart-legend" id="legendSpStatus"><div class="leg-item"><div class="leg-box" style="background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.4)"></div>Q1</div><div class="leg-item"><div class="leg-box" style="background:rgba(29,158,117,0.2);border:1px solid rgba(29,158,117,0.4)"></div>Q2</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px solid #3a7d0a;flex-shrink:0"></div>Accepted</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #E24B4A;flex-shrink:0"></div>Discarded</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #AAAAAA;flex-shrink:0"></div>New</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #7F77DD;flex-shrink:0"></div>Blocked</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #185FA5;flex-shrink:0"></div>Ready To Verify</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #1D9E75;flex-shrink:0"></div>Analysing</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #EF9F27;flex-shrink:0"></div>In Progress</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #5BC0DE;flex-shrink:0"></div>Ready</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #888888;flex-shrink:0"></div>Test</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #20C997;flex-shrink:0"></div>Deployed</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #D85A30;flex-shrink:0"></div>To Rework</div></div>
+  <div class="chart-wrap" style="height:340px"><canvas id="spStatusChart" width="1595" height="340" style="display: block; box-sizing: border-box; height: 340px; width: 1595px;"></canvas></div>
+</div>
 
-        <div id="alerts"></div>
+<!-- 6. GAP por sprint -->
+<div class="section" id="sec-sp-gap">
+  <div class="sec-header"><h2>GAP por Sprint</h2><span class="total" id="spGapTotal">252 registros</span></div>
+  <div class="chart-legend" id="legendSpGap"><div class="leg-item"><div class="leg-box" style="background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.4)"></div>Total por sprint</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px solid #3a7d0a;flex-shrink:0"></div>Tareas entregadas</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed rgba(120,120,120,0.6);flex-shrink:0"></div>Tendencia</div></div>
+  <div class="gap-pills" id="spGapPills"><span class="pill green">Q1 Sprint 1 <b style="color:#065F46">100%</b></span><span class="pill green">Q1 Sprint 2 <b style="color:#065F46">92.3%</b></span><span class="pill green">Q1 Sprint 3 <b style="color:#065F46">90.9%</b></span><span class="pill green">Q1 Sprint 4 <b style="color:#065F46">100%</b></span><span class="pill green">Q1 Sprint 5 <b style="color:#065F46">88.9%</b></span><span class="pill green">Q1 Sprint 6 <b style="color:#065F46">100%</b></span><span class="pill green">Q2 Sprint 1 <b style="color:#065F46">94.4%</b></span><span class="pill green">Q2 Sprint 2 <b style="color:#065F46">87.5%</b></span><span class="pill green">Q2 Sprint 3 <b style="color:#065F46">94.4%</b></span><span class="pill green">Q2 Sprint 4 <b style="color:#065F46">94.4%</b></span><span class="pill yellow">Q2 Sprint 5 <b style="color:#92400E">63.2%</b></span><span class="pill red">Q2 Sprint 6+St <b style="color:#7F1D1D">47.2%</b></span><span class="pill red">Q3 Sprint 1 <b style="color:#7F1D1D">37.5%</b></span><span class="pill red">Q3 Sprint 2 <b style="color:#7F1D1D">43.8%</b></span></div>
+  <div class="chart-wrap" style="height:320px"><canvas id="spGapChart" width="1595" height="320" style="display: block; box-sizing: border-box; height: 320px; width: 1595px;"></canvas></div>
+</div>
 
-        <!-- Métricas -->
-        <div id="sec-metricas" style="scroll-margin-top:80px;margin-bottom:1.25rem">
-          <div style="font-size:12px;color:#aaa;margin-bottom:0.75rem" id="dash-sub">Registros con sprint asignado · estatus general · 252 registros</div>
-          <div class="metric-grid">
-            <div class="metric"><div class="metric-label">Total registros</div><div class="metric-val" id="m-total">252</div><div class="metric-delta neutral" id="d-total"></div></div>
-            <div class="metric"><div class="metric-label">Accepted</div><div class="metric-val green" id="m-accepted">177</div><div class="metric-delta neutral" id="d-accepted"></div></div>
-            <div class="metric"><div class="metric-label">Discarded</div><div class="metric-val red" id="m-discarded">30</div><div class="metric-delta neutral" id="d-discarded"></div></div>
-            <div class="metric"><div class="metric-label">Blocked</div><div class="metric-val amber" id="m-blocked">15</div><div class="metric-delta neutral" id="d-blocked"></div></div>
-          </div>
-          <div class="metric-grid">
-            <div class="metric"><div class="metric-label">In Progress</div><div class="metric-val amber" id="m-inprogress">3</div><div class="metric-delta neutral" id="d-inprogress"></div></div>
-            <div class="metric"><div class="metric-label">Ready To Verify</div><div class="metric-val purple" id="m-rtv">6</div><div class="metric-delta neutral" id="d-rtv"></div></div>
-            <div class="metric"><div class="metric-label">Analysing</div><div class="metric-val purple" id="m-analysing">3</div><div class="metric-delta neutral" id="d-analysing"></div></div>
-            <div class="metric"><div class="metric-label">To Rework / Test</div><div class="metric-val" id="m-other">6</div><div class="metric-delta neutral" id="d-other"></div></div>
-          </div>
-        </div>
+<!-- 7. Análisis -->
+<div class="section" id="sec-analisis">
+  <div class="sec-header"><h2>Análisis</h2><span class="total" id="anStatusTotal">149 registros</span></div>
+  <div class="chart-legend" id="legendAnStatus"><div class="leg-item"><div class="leg-box" style="background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.4)"></div>Q1</div><div class="leg-item"><div class="leg-box" style="background:rgba(29,158,117,0.2);border:1px solid rgba(29,158,117,0.4)"></div>Q2</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px solid #3a7d0a;flex-shrink:0"></div>Accepted</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #E24B4A;flex-shrink:0"></div>Discarded</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #AAAAAA;flex-shrink:0"></div>New</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #7F77DD;flex-shrink:0"></div>Blocked</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #185FA5;flex-shrink:0"></div>Ready To Verify</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #EF9F27;flex-shrink:0"></div>In Progress</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #5BC0DE;flex-shrink:0"></div>Ready</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #888888;flex-shrink:0"></div>Test</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #20C997;flex-shrink:0"></div>Deployed</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #D85A30;flex-shrink:0"></div>To Rework</div></div>
+  <div class="chart-wrap" style="height:340px"><canvas id="anStatusChart" width="1595" height="340" style="display: block; box-sizing: border-box; height: 340px; width: 1595px;"></canvas></div>
+</div>
 
-        <!-- Equipo -->
-        <div class="section" id="sec-equipo">
-          <div class="section-header"><span class="section-title">Distribución por equipo</span><span class="section-count" id="eq-total-badge">252 registros con sprint</span></div>
-          <div class="team-cards">
-            <div class="team-card" style="border-left:3px solid #185FA5"><div class="team-label">Equipo local</div><div class="team-val" style="color:#185FA5" id="t-local">177</div><div class="team-label" id="t-local-pct">70% del total</div></div>
-            <div class="team-card" style="border-left:3px solid #1D9E75"><div class="team-label">Equipo global</div><div class="team-val" style="color:#1D9E75" id="t-global">75</div><div class="team-label" id="t-global-pct">30% del total</div></div>
-          </div>
-          <div style="background:#fff;border:0.5px solid #e8e8e4;border-radius:8px;padding:12px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px">
-              <span style="color:#185FA5;font-weight:500" id="bar-local-label">Local 70%</span>
-              <span style="color:#1D9E75;font-weight:500" id="bar-global-label">Global 30%</span>
-            </div>
-            <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#e8e8e4">
-              <div id="bar-local" style="background: rgb(24, 95, 165); width: 70%; transition: width 0.6s;"></div>
-              <div id="bar-global" style="background: rgb(29, 158, 117); width: 30%; transition: width 0.6s;"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#888">
-              <span id="bar-local-n">177 tareas</span><span id="bar-global-n">75 tareas</span>
-            </div>
-          </div>
-        </div>
+<!-- 8. Validación -->
+<div class="section" id="sec-validacion">
+  <div class="sec-header"><h2>Validación</h2><span class="total" id="valStatusTotal">89 registros</span></div>
+  <div class="chart-legend" id="legendValStatus"><div class="leg-item"><div class="leg-box" style="background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.4)"></div>Q1</div><div class="leg-item"><div class="leg-box" style="background:rgba(29,158,117,0.2);border:1px solid rgba(29,158,117,0.4)"></div>Q2</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px solid #3a7d0a;flex-shrink:0"></div>Accepted</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #E24B4A;flex-shrink:0"></div>Discarded</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #AAAAAA;flex-shrink:0"></div>New</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #7F77DD;flex-shrink:0"></div>Blocked</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #1D9E75;flex-shrink:0"></div>Analysing</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dotted #20C997;flex-shrink:0"></div>Deployed</div><div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed #D85A30;flex-shrink:0"></div>To Rework</div></div>
+  <div class="chart-wrap" style="height:340px"><canvas id="valStatusChart" width="1595" height="340" style="display: block; box-sizing: border-box; height: 340px; width: 1595px;"></canvas></div>
+</div>
 
-        <!-- Estatus general -->
-        <div class="section" id="sec-eg">
-          <div class="section-header"><span class="section-title">Estatus general</span><span class="section-count" id="c1b-count">252 registros</span></div>
-          <div class="legend">
-            <span><span class="lsq" style="background:rgba(24,95,165,0.3)"></span>Q1</span>
-            <span><span class="lsq" style="background:rgba(29,158,117,0.3)"></span>Q2</span>
-            <span><span class="lln" style="border-top:2px solid #639922"></span>Accepted</span>
-            <span><span class="lln" style="border-top:2px dashed #E24B4A"></span>Discarded</span>
-            <span><span class="lln" style="border-top:2px dashed #EF9F27"></span>In Progress</span>
-            <span><span class="lln" style="border-top:2px dotted #7F77DD"></span>Blocked</span>
-            <span><span class="lln" style="border-top:2px dotted #185FA5"></span>Ready To Verify</span>
-            <span><span class="lln" style="border-top:2px dotted #1D9E75"></span>Analysing</span>
-          </div>
-          <div class="chart-wrap" style="height:260px"><canvas id="c1b" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 850px;" width="850"></canvas></div>
-        </div>
+<!-- 9. Equipo local -->
+<div class="section" id="sec-local-sprint">
+  <div class="sec-header"><h2>Equipo Local — Estado por Sprint</h2></div>
+  <p class="sub">Hoja: estatus por sprint — selecciona persona para ver detalle por estado</p>
+  <div class="filter-row" id="localFilters"><button class="filter-btn active">Todos</button><button class="filter-btn">ANDRES FELIPE</button><button class="filter-btn">CARLOS EDUARDO</button><button class="filter-btn">JOHN ALEJANDRO</button><button class="filter-btn">JOSE CARLOS</button><button class="filter-btn">OSCAR JAVIER</button></div>
+  <div class="chart-wrap" style="height:320px"><canvas id="localChart" width="1595" height="320" style="display: block; box-sizing: border-box; height: 320px; width: 1595px;"></canvas></div>
+  <div class="chart-legend" id="legendLocal" style="margin-top:10px"></div>
+</div>
 
-        <!-- GAP General -->
-        <div class="section" id="sec-gap-general">
-          <div class="section-header"><span class="section-title">GAP General</span><span class="section-count" id="cgap-general-count">252 registros</span></div>
-          <div class="legend">
-            <span><span class="lsq" style="background:rgba(24,95,165,0.25);border:1px solid rgba(24,95,165,0.5)"></span>Total por sprint</span>
-            <span><span class="lln" style="border-top:2px solid #639922"></span>Tareas entregadas</span>
-            <span><span class="lln" style="border-top:2px dashed #aaa"></span>Tendencia</span>
-          </div>
-          <div class="pct-row" id="pct-general"><span class="pct-pill"><span style="color:#888">Q1 Sprint 1</span><span style="font-weight:500;color:#3B6D11">100%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 2</span><span style="font-weight:500;color:#3B6D11">92%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 3</span><span style="font-weight:500;color:#3B6D11">91%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 4</span><span style="font-weight:500;color:#3B6D11">100%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 5</span><span style="font-weight:500;color:#854F0B">89%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 6</span><span style="font-weight:500;color:#3B6D11">100%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 1</span><span style="font-weight:500;color:#854F0B">89%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 2</span><span style="font-weight:500;color:#854F0B">88%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 3</span><span style="font-weight:500;color:#854F0B">89%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 4</span><span style="font-weight:500;color:#3B6D11">94%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 5</span><span style="font-weight:500;color:#854F0B">84%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 6+St</span><span style="font-weight:500;color:#854F0B">86%</span></span><span class="pct-pill"><span style="color:#888">Q3 Sprint 1</span><span style="font-weight:500;color:#A32D2D">54%</span></span><span class="pct-pill"><span style="color:#888">Q3 Sprint 2</span><span style="font-weight:500;color:#A32D2D">44%</span></span></div>
-          <div class="chart-wrap" style="height:270px"><canvas id="cgap_general" height="270" style="display: block; box-sizing: border-box; height: 270px; width: 850px;" width="850"></canvas></div>
-        </div>
-
-        <!-- Estatus por sprint -->
-        <div class="section" id="sec-eps">
-          <div class="section-header"><span class="section-title">Estatus general por sprint</span><span class="section-count" id="c1-count">252 registros</span></div>
-          <div class="legend">
-            <span><span class="lsq" style="background:rgba(24,95,165,0.3)"></span>Q1</span>
-            <span><span class="lsq" style="background:rgba(29,158,117,0.3)"></span>Q2</span>
-            <span><span class="lln" style="border-top:2px solid #639922"></span>Accepted</span>
-            <span><span class="lln" style="border-top:2px dashed #E24B4A"></span>Discarded</span>
-            <span><span class="lln" style="border-top:2px dashed #EF9F27"></span>In Progress</span>
-            <span><span class="lln" style="border-top:2px dotted #7F77DD"></span>Blocked</span>
-          </div>
-          <div class="chart-wrap" style="height:260px"><canvas id="c1" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 850px;" width="850"></canvas></div>
-        </div>
-
-        <!-- GAP por sprint -->
-        <div class="section" id="sec-gap-sprint">
-          <div class="section-header"><span class="section-title">GAP por sprint</span><span class="section-count" id="cgap-sprint-count">252 registros</span></div>
-          <div class="legend">
-            <span><span class="lsq" style="background:rgba(24,95,165,0.25);border:1px solid rgba(24,95,165,0.5)"></span>Total por sprint</span>
-            <span><span class="lln" style="border-top:2px solid #639922"></span>Tareas entregadas</span>
-            <span><span class="lln" style="border-top:2px dashed #aaa"></span>Tendencia</span>
-          </div>
-          <div class="pct-row" id="pct-sprint"><span class="pct-pill"><span style="color:#888">Q1 Sprint 1</span><span style="font-weight:500;color:#3B6D11">100%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 2</span><span style="font-weight:500;color:#3B6D11">92%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 3</span><span style="font-weight:500;color:#3B6D11">91%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 4</span><span style="font-weight:500;color:#3B6D11">100%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 5</span><span style="font-weight:500;color:#854F0B">89%</span></span><span class="pct-pill"><span style="color:#888">Q1 Sprint 6</span><span style="font-weight:500;color:#3B6D11">100%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 1</span><span style="font-weight:500;color:#3B6D11">94%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 2</span><span style="font-weight:500;color:#854F0B">88%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 3</span><span style="font-weight:500;color:#3B6D11">94%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 4</span><span style="font-weight:500;color:#3B6D11">94%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 5</span><span style="font-weight:500;color:#A32D2D">63%</span></span><span class="pct-pill"><span style="color:#888">Q2 Sprint 6+St</span><span style="font-weight:500;color:#A32D2D">47%</span></span><span class="pct-pill"><span style="color:#888">Q3 Sprint 1</span><span style="font-weight:500;color:#A32D2D">38%</span></span><span class="pct-pill"><span style="color:#888">Q3 Sprint 2</span><span style="font-weight:500;color:#A32D2D">44%</span></span></div>
-          <div class="chart-wrap" style="height:270px"><canvas id="cgap_sprint" height="270" style="display: block; box-sizing: border-box; height: 270px; width: 850px;" width="850"></canvas></div>
-        </div>
-
-        <!-- Análisis -->
-        <div class="section" id="sec-analisis">
-          <div class="section-header"><span class="section-title">Análisis</span><span class="section-count" id="c2-count">149 registros</span></div>
-          <div class="legend">
-            <span><span class="lsq" style="background:rgba(24,95,165,0.3)"></span>Q1</span>
-            <span><span class="lsq" style="background:rgba(29,158,117,0.3)"></span>Q2</span>
-            <span><span class="lln" style="border-top:2px solid #639922"></span>Accepted</span>
-            <span><span class="lln" style="border-top:2px dashed #E24B4A"></span>Discarded</span>
-            <span><span class="lln" style="border-top:2px dashed #185FA5"></span>Ready To Verify</span>
-            <span><span class="lln" style="border-top:2px dashed #EF9F27"></span>In Progress</span>
-            <span><span class="lln" style="border-top:2px dotted #7F77DD"></span>Analysing</span>
-          </div>
-          <div class="chart-wrap" style="height:260px"><canvas id="c2" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 850px;" width="850"></canvas></div>
-        </div>
-
-        <!-- Validación -->
-        <div class="section" id="sec-validacion">
-          <div class="section-header"><span class="section-title">Validación</span><span class="section-count" id="c3-count">89 registros</span></div>
-          <div class="legend">
-            <span><span class="lsq" style="background:rgba(24,95,165,0.3)"></span>Q1</span>
-            <span><span class="lsq" style="background:rgba(29,158,117,0.3)"></span>Q2</span>
-            <span><span class="lln" style="border-top:2px solid #639922"></span>Accepted</span>
-            <span><span class="lln" style="border-top:2px dashed #E24B4A"></span>Discarded</span>
-            <span><span class="lln" style="border-top:2px dashed #EF9F27"></span>In Progress</span>
-            <span><span class="lln" style="border-top:2px dotted #7F77DD"></span>Blocked</span>
-            <span><span class="lln" style="border-top:2px dotted #185FA5"></span>Analysing</span>
-          </div>
-          <div class="chart-wrap" style="height:260px"><canvas id="c3" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 850px;" width="850"></canvas></div>
-        </div>
-
-        <!-- Equipo local -->
-        <div class="section" id="sec-local">
-          <div class="section-header"><span class="section-title">Equipo local — estado por sprint</span><span class="section-count" id="eq-badge">177 registros</span></div>
-          <div class="filter-row" id="eq-filters"><button class="fbtn active" onclick="filterEq(this,'all')">Todos</button><button class="fbtn" onclick="filterEq(this,'OSCAR JAVIER VEGA BELLO')">OSCAR JAVIER</button><button class="fbtn" onclick="filterEq(this,'JOHN ALEJANDRO ALFONSO NIÑO')">JOHN ALEJANDRO</button><button class="fbtn" onclick="filterEq(this,'CARLOS EDUARDO MANZANO VELAZQUEZ')">CARLOS EDUARDO</button><button class="fbtn" onclick="filterEq(this,'ANDRES FELIPE DEOSSA SALAVERRIA')">ANDRES FELIPE</button><button class="fbtn" onclick="filterEq(this,'JOSE CARLOS SILVA SILVA')">JOSE CARLOS</button></div>
-          <div class="legend" id="eq-legend"><span><span class="lsq" style="background:#185FA5"></span>OSCAR JAVIER</span><span><span class="lsq" style="background:#EF9F27"></span>CARLOS EDUARDO</span><span><span class="lsq" style="background:#1D9E75"></span>JOHN ALEJANDRO</span><span><span class="lsq" style="background:#D85A30"></span>JOSE CARLOS</span><span><span class="lsq" style="background:#7F77DD"></span>ANDRES FELIPE</span></div>
-          <div class="chart-wrap" style="height:280px"><canvas id="c4" height="280" style="display: block; box-sizing: border-box; height: 280px; width: 850px;" width="850"></canvas></div>
-        </div>
-
-        <!-- Retraso análisis -->
-        <div class="section" id="sec-delay-a">
-          <div class="section-header"><span class="section-title">Retraso en tareas de análisis</span><span class="section-count" id="ca-count">149 tareas con retraso</span></div>
-          <p class="chart-sub">Número de sprints de retraso (homework delay)</p>
-          <div class="chart-wrap" style="height:240px"><canvas id="ca" height="240" style="display: block; box-sizing: border-box; height: 240px; width: 850px;" width="850"></canvas></div>
-        </div>
-
-        <!-- Retraso validación -->
-        <div class="section" id="sec-delay-v">
-          <div class="section-header"><span class="section-title">Retraso en tareas de validación</span><span class="section-count" id="cv-count">89 tareas con retraso</span></div>
-          <p class="chart-sub">Número de sprints de retraso (homework delay)</p>
-          <div class="chart-wrap" style="height:240px"><canvas id="cv" height="240" style="display: block; box-sizing: border-box; height: 240px; width: 850px;" width="850"></canvas></div>
-        </div>
-
-      </div>
-    </div>
+<!-- 10/11. Retraso análisis + validación -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+  <div class="section" id="sec-hw-analisis" style="margin-bottom:0">
+    <div class="sec-header"><h2>Retraso Análisis</h2></div>
+    <p class="sub">Distribución de homework delay (días) — análisis</p>
+    <div class="chart-wrap" style="height:240px"><canvas id="hwAnChart" width="768" height="240" style="display: block; box-sizing: border-box; height: 240px; width: 768px;"></canvas></div>
+  </div>
+  <div class="section" id="sec-hw-validacion" style="margin-bottom:0">
+    <div class="sec-header"><h2>Retraso Validación</h2></div>
+    <p class="sub">Distribución de homework delay (días) — validación</p>
+    <div class="chart-wrap" style="height:240px"><canvas id="hwValChart" width="768" height="240" style="display: block; box-sizing: border-box; height: 240px; width: 768px;"></canvas></div>
   </div>
 </div>
 
-<footer>Dashboard de sprints · datos procesados localmente en tu navegador · nunca se envían a ningún servidor</footer>
+</div><!-- /main -->
 
 <script>
-Chart.register(ChartDataLabels);
+const DASHBOARD_DATA = {"sprintOrder": ["Q1   Sprint 1", "Q1   Sprint 2", "Q1   Sprint 3", "Q1   Sprint 4", "Q1   Sprint 5", "Q1   Sprint 6", "Q2   Sprint 1", "Q2   Sprint 2", "Q2   Sprint 3", "Q2   Sprint 4", "Q2   Sprint 5", "Q2   Sprint 6+St", "Q3   Sprint 1", "Q3   Sprint 2"], "sprintLabels": ["Q1 Sprint 1", "Q1 Sprint 2", "Q1 Sprint 3", "Q1 Sprint 4", "Q1 Sprint 5", "Q1 Sprint 6", "Q2 Sprint 1", "Q2 Sprint 2", "Q2 Sprint 3", "Q2 Sprint 4", "Q2 Sprint 5", "Q2 Sprint 6+St", "Q3 Sprint 1", "Q3 Sprint 2"], "validStates": ["Accepted", "Discarded", "New", "Blocked", "Ready To Verify", "Analysing", "In Progress", "Ready", "Test", "Deployed", "To Rework"], "gapStates": ["Accepted", "Discarded", "Ready To Verify"], "metrics": {"Accepted": 177, "Discarded": 30, "New": 7, "Blocked": 15, "Ready To Verify": 6, "Analysing": 3, "In Progress": 3, "Ready": 1, "Test": 2, "Deployed": 4, "To Rework": 4, "total": 252, "local": 177, "global": 74, "other": 1}, "genEstadoSprint": {"Q1   Sprint 1": {"Accepted": 8, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 11, "Discarded": 1, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 9, "Discarded": 1, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 17, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 14, "Discarded": 2, "New": 0, "Blocked": 2, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 14, "Discarded": 5, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 12, "Discarded": 4, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 1, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 1, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 11, "Discarded": 3, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 1, "Ready": 0, "Test": 0, "Deployed": 1, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 15, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 2, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 13, "Discarded": 4, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 1, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 13, "Discarded": 2, "New": 0, "Blocked": 3, "Ready To Verify": 1, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 25, "Discarded": 4, "New": 2, "Blocked": 0, "Ready To Verify": 2, "Analysing": 1, "In Progress": 0, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 1}, "Q3   Sprint 1": {"Accepted": 11, "Discarded": 2, "New": 0, "Blocked": 5, "Ready To Verify": 0, "Analysing": 0, "In Progress": 2, "Ready": 1, "Test": 0, "Deployed": 0, "To Rework": 3}, "Q3   Sprint 2": {"Accepted": 4, "Discarded": 0, "New": 5, "Blocked": 3, "Ready To Verify": 3, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 0}}, "genTotals": {"Q1   Sprint 1": 8, "Q1   Sprint 2": 13, "Q1   Sprint 3": 11, "Q1   Sprint 4": 18, "Q1   Sprint 5": 18, "Q1   Sprint 6": 19, "Q2   Sprint 1": 18, "Q2   Sprint 2": 16, "Q2   Sprint 3": 18, "Q2   Sprint 4": 18, "Q2   Sprint 5": 19, "Q2   Sprint 6+St": 36, "Q3   Sprint 1": 24, "Q3   Sprint 2": 16}, "genGap": {"Q1   Sprint 1": 100.0, "Q1   Sprint 2": 92.3, "Q1   Sprint 3": 90.9, "Q1   Sprint 4": 100.0, "Q1   Sprint 5": 88.9, "Q1   Sprint 6": 100.0, "Q2   Sprint 1": 88.9, "Q2   Sprint 2": 87.5, "Q2   Sprint 3": 88.9, "Q2   Sprint 4": 94.4, "Q2   Sprint 5": 84.2, "Q2   Sprint 6+St": 86.1, "Q3   Sprint 1": 54.2, "Q3   Sprint 2": 43.8}, "spEstadoSprint": {"Q1   Sprint 1": {"Accepted": 8, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 11, "Discarded": 1, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 9, "Discarded": 1, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 17, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 14, "Discarded": 2, "New": 0, "Blocked": 2, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 14, "Discarded": 5, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 13, "Discarded": 4, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 11, "Discarded": 3, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 1, "Ready": 0, "Test": 0, "Deployed": 1, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 16, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 1, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 13, "Discarded": 4, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 1, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 7, "Discarded": 3, "New": 3, "Blocked": 2, "Ready To Verify": 2, "Analysing": 0, "In Progress": 1, "Ready": 1, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 12, "Discarded": 2, "New": 6, "Blocked": 5, "Ready To Verify": 3, "Analysing": 1, "In Progress": 4, "Ready": 1, "Test": 1, "Deployed": 0, "To Rework": 1}, "Q3   Sprint 1": {"Accepted": 3, "Discarded": 2, "New": 2, "Blocked": 1, "Ready To Verify": 4, "Analysing": 3, "In Progress": 2, "Ready": 4, "Test": 2, "Deployed": 0, "To Rework": 1}, "Q3   Sprint 2": {"Accepted": 4, "Discarded": 0, "New": 5, "Blocked": 3, "Ready To Verify": 3, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 0}}, "spTotals": {"Q1   Sprint 1": 8, "Q1   Sprint 2": 13, "Q1   Sprint 3": 11, "Q1   Sprint 4": 18, "Q1   Sprint 5": 18, "Q1   Sprint 6": 19, "Q2   Sprint 1": 18, "Q2   Sprint 2": 16, "Q2   Sprint 3": 18, "Q2   Sprint 4": 18, "Q2   Sprint 5": 19, "Q2   Sprint 6+St": 36, "Q3   Sprint 1": 24, "Q3   Sprint 2": 16}, "spGap": {"Q1   Sprint 1": 100.0, "Q1   Sprint 2": 92.3, "Q1   Sprint 3": 90.9, "Q1   Sprint 4": 100.0, "Q1   Sprint 5": 88.9, "Q1   Sprint 6": 100.0, "Q2   Sprint 1": 94.4, "Q2   Sprint 2": 87.5, "Q2   Sprint 3": 94.4, "Q2   Sprint 4": 94.4, "Q2   Sprint 5": 63.2, "Q2   Sprint 6+St": 47.2, "Q3   Sprint 1": 37.5, "Q3   Sprint 2": 43.8}, "anGenEstado": {"Q1   Sprint 1": {"Accepted": 4, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 4, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 4, "Discarded": 0, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 7, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 6, "Discarded": 2, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 11, "Discarded": 3, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 8, "Discarded": 4, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 1, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 8, "Discarded": 3, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 1, "Ready": 0, "Test": 0, "Deployed": 1, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 12, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 2, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 9, "Discarded": 4, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 9, "Discarded": 2, "New": 0, "Blocked": 0, "Ready To Verify": 1, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 14, "Discarded": 3, "New": 1, "Blocked": 0, "Ready To Verify": 2, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 1}, "Q3   Sprint 1": {"Accepted": 0, "Discarded": 2, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 2, "Ready": 1, "Test": 0, "Deployed": 0, "To Rework": 2}, "Q3   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 4, "Blocked": 2, "Ready To Verify": 3, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 0}}, "anGenTotals": {"Q1   Sprint 1": 4, "Q1   Sprint 2": 5, "Q1   Sprint 3": 5, "Q1   Sprint 4": 8, "Q1   Sprint 5": 8, "Q1   Sprint 6": 14, "Q2   Sprint 1": 13, "Q2   Sprint 2": 13, "Q2   Sprint 3": 15, "Q2   Sprint 4": 13, "Q2   Sprint 5": 12, "Q2   Sprint 6+St": 22, "Q3   Sprint 1": 7, "Q3   Sprint 2": 10}, "valGenEstado": {"Q1   Sprint 1": {"Accepted": 3, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 6, "Discarded": 0, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 4, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 9, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 8, "Discarded": 0, "New": 0, "Blocked": 2, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 3, "Discarded": 2, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 2, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 2, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 2, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 1, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 4, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 1, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 2, "Discarded": 0, "New": 0, "Blocked": 3, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 11, "Discarded": 1, "New": 1, "Blocked": 0, "Ready To Verify": 0, "Analysing": 1, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 1": {"Accepted": 7, "Discarded": 0, "New": 0, "Blocked": 5, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 1}, "Q3   Sprint 2": {"Accepted": 4, "Discarded": 0, "New": 1, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}}, "valGenTotals": {"Q1   Sprint 1": 3, "Q1   Sprint 2": 7, "Q1   Sprint 3": 5, "Q1   Sprint 4": 9, "Q1   Sprint 5": 10, "Q1   Sprint 6": 5, "Q2   Sprint 1": 2, "Q2   Sprint 2": 2, "Q2   Sprint 3": 3, "Q2   Sprint 4": 5, "Q2   Sprint 5": 5, "Q2   Sprint 6+St": 14, "Q3   Sprint 1": 13, "Q3   Sprint 2": 6}, "localMembers": ["ANDRES FELIPE DEOSSA SALAVERRIA", "CARLOS EDUARDO MANZANO VELAZQUEZ", "JOHN ALEJANDRO ALFONSO NIÑO", "JOSE CARLOS SILVA SILVA", "OSCAR JAVIER VEGA BELLO"], "localBySprint": {"ANDRES FELIPE DEOSSA SALAVERRIA": {"Q1   Sprint 1": 0, "Q1   Sprint 2": 0, "Q1   Sprint 3": 0, "Q1   Sprint 4": 0, "Q1   Sprint 5": 0, "Q1   Sprint 6": 0, "Q2   Sprint 1": 0, "Q2   Sprint 2": 0, "Q2   Sprint 3": 0, "Q2   Sprint 4": 0, "Q2   Sprint 5": 0, "Q2   Sprint 6+St": 4, "Q3   Sprint 1": 3, "Q3   Sprint 2": 1}, "CARLOS EDUARDO MANZANO VELAZQUEZ": {"Q1   Sprint 1": 0, "Q1   Sprint 2": 0, "Q1   Sprint 3": 0, "Q1   Sprint 4": 0, "Q1   Sprint 5": 0, "Q1   Sprint 6": 0, "Q2   Sprint 1": 0, "Q2   Sprint 2": 0, "Q2   Sprint 3": 2, "Q2   Sprint 4": 1, "Q2   Sprint 5": 3, "Q2   Sprint 6+St": 3, "Q3   Sprint 1": 6, "Q3   Sprint 2": 4}, "JOHN ALEJANDRO ALFONSO NIÑO": {"Q1   Sprint 1": 3, "Q1   Sprint 2": 0, "Q1   Sprint 3": 2, "Q1   Sprint 4": 1, "Q1   Sprint 5": 3, "Q1   Sprint 6": 0, "Q2   Sprint 1": 0, "Q2   Sprint 2": 0, "Q2   Sprint 3": 0, "Q2   Sprint 4": 0, "Q2   Sprint 5": 0, "Q2   Sprint 6+St": 5, "Q3   Sprint 1": 3, "Q3   Sprint 2": 2}, "JOSE CARLOS SILVA SILVA": {"Q1   Sprint 1": 0, "Q1   Sprint 2": 0, "Q1   Sprint 3": 0, "Q1   Sprint 4": 0, "Q1   Sprint 5": 0, "Q1   Sprint 6": 0, "Q2   Sprint 1": 1, "Q2   Sprint 2": 3, "Q2   Sprint 3": 1, "Q2   Sprint 4": 4, "Q2   Sprint 5": 2, "Q2   Sprint 6+St": 0, "Q3   Sprint 1": 0, "Q3   Sprint 2": 0}, "OSCAR JAVIER VEGA BELLO": {"Q1   Sprint 1": 4, "Q1   Sprint 2": 9, "Q1   Sprint 3": 6, "Q1   Sprint 4": 13, "Q1   Sprint 5": 9, "Q1   Sprint 6": 13, "Q2   Sprint 1": 8, "Q2   Sprint 2": 8, "Q2   Sprint 3": 8, "Q2   Sprint 4": 6, "Q2   Sprint 5": 10, "Q2   Sprint 6+St": 15, "Q3   Sprint 1": 4, "Q3   Sprint 2": 5}}, "localStateBySprint": {"ANDRES FELIPE DEOSSA SALAVERRIA": {"Q1   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 1, "Discarded": 0, "New": 2, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 1}, "Q3   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 1, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 1, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 1}, "Q3   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 1, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}}, "CARLOS EDUARDO MANZANO VELAZQUEZ": {"Q1   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 2, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 1, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 1, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 1, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 0, "Discarded": 0, "New": 1, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 1, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 1": {"Accepted": 3, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 2, "In Progress": 0, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 3, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 0}}, "JOHN ALEJANDRO ALFONSO NIÑO": {"Q1   Sprint 1": {"Accepted": 3, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 2, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 1, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 2, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 2, "Ready To Verify": 0, "Analysing": 0, "In Progress": 2, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 1, "Ready": 0, "Test": 1, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 2, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}}, "JOSE CARLOS SILVA SILVA": {"Q1   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 1, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 2, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 1, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 1, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 3, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 0, "Discarded": 2, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 1": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 2": {"Accepted": 0, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}}, "OSCAR JAVIER VEGA BELLO": {"Q1   Sprint 1": {"Accepted": 4, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 2": {"Accepted": 8, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 3": {"Accepted": 4, "Discarded": 1, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 4": {"Accepted": 12, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 5": {"Accepted": 7, "Discarded": 1, "New": 0, "Blocked": 1, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q1   Sprint 6": {"Accepted": 11, "Discarded": 2, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 1": {"Accepted": 6, "Discarded": 2, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 2": {"Accepted": 7, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 3": {"Accepted": 7, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 4": {"Accepted": 4, "Discarded": 2, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 5": {"Accepted": 3, "Discarded": 0, "New": 3, "Blocked": 2, "Ready To Verify": 2, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q2   Sprint 6+St": {"Accepted": 9, "Discarded": 2, "New": 1, "Blocked": 1, "Ready To Verify": 1, "Analysing": 1, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 1": {"Accepted": 0, "Discarded": 1, "New": 0, "Blocked": 0, "Ready To Verify": 0, "Analysing": 0, "In Progress": 0, "Ready": 3, "Test": 0, "Deployed": 0, "To Rework": 0}, "Q3   Sprint 2": {"Accepted": 4, "Discarded": 0, "New": 0, "Blocked": 0, "Ready To Verify": 1, "Analysing": 0, "In Progress": 0, "Ready": 0, "Test": 0, "Deployed": 0, "To Rework": 0}}}, "hwAnalisis": {"1": 33, "2": 53, "3": 34, "4": 19, "5": 5, "6": 2, "7": 1, "8": 2}, "hwValidacion": {"1": 42, "2": 21, "3": 17, "4": 2, "5": 4, "6": 1, "7": 2}};
 
-const SPRINT_ORDER=['Q1-S1','Q1-S2','Q1-S3','Q1-S4','Q1-S5','Q1-S6','Q2-S1','Q2-S2','Q2-S3','Q2-S4','Q2-S5','Q2-S6','Q1 Sprint 1','Q1 Sprint 2','Q1 Sprint 3','Q1 Sprint 4','Q1 Sprint 5','Q1 Sprint 6','Q2 Sprint 1','Q2 Sprint 2','Q2 Sprint 3','Q2 Sprint 4','Q2 Sprint 5','Q2 Sprint 6+St','Q3 Sprint 1','Q3 Sprint 2'];
-function normSprint(s){return s.replace(/\s+/g,' ').trim();}
-function sprintLabel(s){return s.replace('Sprint ','S').replace('-S',' S');}
-const COLORS={'Accepted':'#639922','Discarded':'#E24B4A','In Progress':'#EF9F27','Blocked':'#7F77DD','Ready To Verify':'#185FA5','Analysing':'#1D9E75','To Rework':'#D85A30','Test':'#888'};
-const PERSON_COLORS=['#185FA5','#1D9E75','#EF9F27','#7F77DD','#D85A30','#639922'];
+const D = DASHBOARD_DATA;
+const SP = D.sprintOrder;
+const SL = D.sprintLabels;
 
-let charts={}, prevData=null, eqData={}, eqSprints=[], currentPersona='all';
-let snapshotData=null;
+// Colors
+const Q_BG = sp => sp.startsWith('Q1') ? 'rgba(24,95,165,0.15)' : sp.startsWith('Q2') ? 'rgba(29,158,117,0.15)' : 'rgba(255,165,0,0.15)';
+const Q_BORDER = sp => sp.startsWith('Q1') ? 'rgba(24,95,165,0.3)' : sp.startsWith('Q2') ? 'rgba(29,158,117,0.3)' : 'rgba(255,165,0,0.3)';
 
-function scrollTo(id){
-  document.getElementById(id).scrollIntoView({behavior:'smooth'});
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(id))b.classList.add('active');});
+const SC = {
+  'Accepted':       {color:'#3a7d0a', dash:[]},
+  'Discarded':      {color:'#E24B4A', dash:[6,3]},
+  'In Progress':    {color:'#EF9F27', dash:[6,3]},
+  'Blocked':        {color:'#7F77DD', dash:[2,3]},
+  'Ready To Verify':{color:'#185FA5', dash:[6,2]},
+  'Analysing':      {color:'#1D9E75', dash:[4,2]},
+  'New':            {color:'#AAAAAA', dash:[2,2]},
+  'Ready':          {color:'#5BC0DE', dash:[4,2]},
+  'Test':           {color:'#888888', dash:[2,2]},
+  'Deployed':       {color:'#20C997', dash:[4,2]},
+  'To Rework':      {color:'#D85A30', dash:[6,3]},
+};
+
+const PERSON_COLORS = ['#7BAFD4','#7EC8AA','#F5C97A','#B3AFE8','#E8A98A','#A8C97A'];
+
+function linearTrend(arr) {
+  const n=arr.length, mx=(n-1)/2;
+  const my=arr.reduce((a,b)=>a+b,0)/n;
+  const num=arr.reduce((s,v,i)=>s+(i-mx)*(v-my),0);
+  const den=arr.reduce((s,_,i)=>s+(i-mx)**2,0);
+  const m=den?num/den:0, b=my-m*mx;
+  return arr.map((_,i)=>+(m*i+b).toFixed(1));
 }
 
-// Intersection observer para nav activo
-function setupNavObserver(){
-  const sections=['sec-metricas','sec-equipo','sec-eg','sec-gap-general','sec-eps','sec-gap-sprint','sec-analisis','sec-validacion','sec-local','sec-delay-a','sec-delay-v'];
-  const obs=new IntersectionObserver(entries=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(e.target.id))b.classList.add('active');});
+const DL = window.ChartDataLabels;
+
+// ── 1. Métricas ───────────────────────────────────────────────────────────────
+(()=>{
+  const m=D.metrics;
+  const items=[
+    {l:'Total',v:m.total,c:'#185FA5'},
+    {l:'Accepted',v:m.Accepted,c:'#3a7d0a'},
+    {l:'Discarded',v:m.Discarded,c:'#E24B4A'},
+    {l:'Blocked',v:m.Blocked,c:'#7F77DD'},
+    {l:'In Progress',v:m['In Progress'],c:'#EF9F27'},
+    {l:'Ready To Verify',v:m['Ready To Verify'],c:'#185FA5'},
+    {l:'Analysing',v:m.Analysing,c:'#1D9E75'},
+    {l:'To Rework+Test',v:m['To Rework']+m.Test,c:'#D85A30'},
+    {l:'Local',v:m.local,c:'#444'},
+    {l:'Global',v:m.global,c:'#888'},
+  ];
+  document.getElementById('metricsGrid').innerHTML=items.map(it=>
+    `<div class="metric-card"><div class="val" style="color:${it.c}">${it.v}</div><div class="lbl">${it.l}</div></div>`
+  ).join('');
+})();
+
+// ── 2. Equipo ──────────────────────────────────────────────────────────────────
+(()=>{
+  const {local,global:glob}=D.metrics, tot=local+glob;
+  const pl=(local/tot*100).toFixed(1), pg=(glob/tot*100).toFixed(1);
+  document.getElementById('teamBar').innerHTML=
+    `<div class="seg" style="width:${pl}%;background:#185FA5">${pl}% Local</div>`+
+    `<div class="seg" style="width:${pg}%;background:#1D9E75">${pg}% Global</div>`;
+  document.getElementById('teamLegend').innerHTML=
+    `<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#185FA5;display:inline-block"></span>Local (${local})</span>`+
+    `<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block"></span>Global (${glob})</span>`;
+})();
+
+// ── Helper: Estatus chart — bars (total por sprint) + lines per state ──────────
+// Bars show total per sprint colored by Q. Lines show count per state.
+function buildStatusChart(canvasId, legendId, totalId, estadoSprint, totals) {
+  const activeStates = D.validStates.filter(s => SP.some(sp => estadoSprint[sp][s] > 0));
+  const total = SP.reduce((s,sp)=>s+totals[sp],0);
+  if(totalId) document.getElementById(totalId).textContent = total+' registros';
+
+  const datasets = [
+    // Background bars = total per sprint, colored by Q
+    {
+      type:'bar', label:'', order:2,
+      data: SP.map(sp=>totals[sp]),
+      backgroundColor: SP.map(sp=>Q_BG(sp)),
+      borderColor: SP.map(sp=>Q_BORDER(sp)),
+      borderWidth:1, borderRadius:3,
+      datalabels:{
+        anchor:'end', align:'end',
+        font:{size:10, weight:'600'}, color:'#555',
+        formatter:v=>v
       }
-    });
-  },{rootMargin:'-30% 0px -60% 0px'});
-  sections.forEach(id=>{const el=document.getElementById(id);if(el)obs.observe(el);});
-}
+    },
+    // Lines per state
+    ...activeStates.map(s=>({
+      type:'line', label:s, order:1,
+      data: SP.map(sp=>estadoSprint[sp][s]),
+      borderColor: SC[s]?.color||'#999',
+      backgroundColor:'transparent',
+      borderDash: SC[s]?.dash||[],
+      tension:0.35, pointRadius:4, pointHoverRadius:6,
+      borderWidth:2,
+      datalabels:{
+        anchor:'top', align:'top',
+        font:{size:9, weight:'600'}, color: SC[s]?.color||'#999',
+        formatter:(v)=>v>0?v:null
+      }
+    }))
+  ];
 
-function sprintKey(s){const m=s.match(/Q(\d+)-S(\d+)/);return m?parseInt(m[1])*100+parseInt(m[2]):9999;}
-function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+  // Legend: Q boxes + state lines
+  const lg = document.getElementById(legendId);
+  const legLineStyle = (s) => {
+    const c = SC[s]?.color||'#999';
+    const dash = SC[s]?.dash||[];
+    if(!dash.length) return `border-top:2px solid ${c}`;
+    if(dash[1]<=2) return `border-top:2px dotted ${c}`;
+    return `border-top:2px dashed ${c}`;
+  };
+  lg.innerHTML =
+    `<div class="leg-item"><div class="leg-box" style="background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.4)"></div>Q1</div>`+
+    `<div class="leg-item"><div class="leg-box" style="background:rgba(29,158,117,0.2);border:1px solid rgba(29,158,117,0.4)"></div>Q2</div>`+
+    activeStates.map(s=>{
+      return `<div class="leg-item"><div style="width:22px;height:0;${legLineStyle(s)};flex-shrink:0"></div>${s}</div>`;
+    }).join('');
 
-const q1c='rgba(24,95,165,0.2)',q2c='rgba(29,158,117,0.2)',q1b='rgba(24,95,165,0.45)',q2b='rgba(29,158,117,0.45)';
-function sprintBg(labels){return labels.map(l=>l.startsWith('Q1')?q1c:q2c);}
-function sprintBd(labels){return labels.map(l=>l.startsWith('Q1')?q1b:q2b);}
-
-function barDs(labels,data){return{type:'bar',label:'Total',data,backgroundColor:sprintBg(labels),borderColor:sprintBd(labels),borderWidth:1,borderRadius:4,borderSkipped:false,yAxisID:'y',order:1,datalabels:{anchor:'end',align:'end',color:'rgba(100,100,100,0.8)',font:{size:10,weight:'500'},formatter:v=>v||''}};}
-function lineDs(label,data,color,dash=[]){return{type:'line',label,data,borderColor:color,backgroundColor:color,borderWidth:2,pointRadius:ctx=>data[ctx.dataIndex]>0?3:0,pointHoverRadius:6,borderDash:dash,tension:0.3,yAxisID:'y',order:0,spanGaps:false,segment:{borderColor:ctx=>(data[ctx.p0DataIndex]===0||data[ctx.p1DataIndex]===0)?'transparent':color},datalabels:{display:ctx=>data[ctx.dataIndex]>0,align:'top',anchor:'top',color,font:{size:10,weight:'500'},formatter:v=>v}};}
-const opts=step=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},plugins:{legend:{display:false},datalabels:{},tooltip:{callbacks:{footer:items=>'Total: '+items.reduce((s,i)=>s+i.parsed.y,0)}}},scales:{x:{ticks:{autoSkip:false,maxRotation:35,font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:step,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}});
-
-// Línea de tendencia lineal
-function trendLine(data){
-  const n=data.length, validPts=data.map((v,i)=>({x:i,y:v})).filter(p=>p.y>0);
-  if(validPts.length<2)return Array(n).fill(null);
-  const sumX=validPts.reduce((s,p)=>s+p.x,0), sumY=validPts.reduce((s,p)=>s+p.y,0);
-  const sumXY=validPts.reduce((s,p)=>s+p.x*p.y,0), sumX2=validPts.reduce((s,p)=>s+p.x*p.x,0);
-  const nv=validPts.length, m=(nv*sumXY-sumX*sumY)/(nv*sumX2-sumX*sumX), b=(sumY-m*sumX)/nv;
-  return Array.from({length:n},(_,i)=>Math.max(0,Math.round(m*i+b)));
-}
-
-function buildGap(canvasId,legendId,countId,sprints,totales,entregadas){
-  const pcts=totales.map((t,i)=>t>0?Math.round(entregadas[i]/t*100):0);
-  document.getElementById(countId).textContent=totales.reduce((a,b)=>a+b,0)+' registros';
-  const trend=trendLine(entregadas);
-  destroyChart(canvasId);
-  charts[canvasId]=new Chart(document.getElementById(canvasId),{
-    data:{labels:sprints,datasets:[
-      barDs(sprints,totales),
-      lineDs('Tareas entregadas',entregadas,'#639922'),
-      {type:'line',label:'Tendencia',data:trend,borderColor:'rgba(100,100,100,0.4)',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,yAxisID:'y',order:0,datalabels:{display:false}},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:false},datalabels:{},tooltip:{callbacks:{footer:items=>{const i=items[0].dataIndex;return`Entregadas: ${entregadas[i]}/${totales[i]} (${pcts[i]}%)\nTendencia: ${trend[i]}`;}}}},scales:{x:{ticks:{autoSkip:false,maxRotation:35,font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:5,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}}
+  new Chart(document.getElementById(canvasId), {
+    plugins:[DL],
+    data:{labels:SL, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, datalabels:{display:true}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:10}}, beginAtZero:true}
+      }
+    }
   });
-  document.getElementById(legendId).innerHTML=sprints.map((sp,i)=>{
-    const pct=pcts[i],color=pct>=90?'#3B6D11':pct>=70?'#854F0B':'#A32D2D';
-    return`<span class="pct-pill"><span style="color:#888">${sp}</span><span style="font-weight:500;color:${color}">${pct}%</span></span>`;
+}
+
+buildStatusChart('genStatusChart','legendGenStatus','genStatusTotal', D.genEstadoSprint, D.genTotals);
+buildStatusChart('spStatusChart', 'legendSpStatus', 'spStatusTotal',  D.spEstadoSprint,  D.spTotals);
+buildStatusChart('anStatusChart', 'legendAnStatus', 'anStatusTotal',  D.anGenEstado,     D.anGenTotals);
+buildStatusChart('valStatusChart','legendValStatus','valStatusTotal',  D.valGenEstado,    D.valGenTotals);
+
+// ── Helper: GAP chart — bars (total) + line (gap count) + trend ───────────────
+function buildGapChart(canvasId, legendId, totalId, pillsId, gap, totals, estadoSprint) {
+  const total = SP.reduce((s,sp)=>s+totals[sp],0);
+  if(totalId) document.getElementById(totalId).textContent = total+' registros';
+
+  // Pills
+  const pills = document.getElementById(pillsId);
+  pills.innerHTML = SP.map((sp,i)=>{
+    const v=gap[sp]; if(v===null||v===undefined) return '';
+    const cls=v>=80?'green':v>=50?'yellow':'red';
+    const pctColor=v>=80?'#065F46':v>=50?'#92400E':'#7F1D1D';
+    return `<span class="pill ${cls}">${SL[i]} <b style="color:${pctColor}">${v}%</b></span>`;
   }).join('');
+
+  const gapCounts = SP.map(sp=>D.gapStates.reduce((s,st)=>s+(estadoSprint[sp][st]||0),0));
+  const trend = linearTrend(gapCounts);
+
+  const datasets = [
+    {
+      type:'bar', label:'Total por sprint', order:3,
+      data:SP.map(sp=>totals[sp]),
+      backgroundColor:SP.map(sp=>Q_BG(sp)),
+      borderColor:SP.map(sp=>Q_BORDER(sp)),
+      borderWidth:1, borderRadius:3,
+      datalabels:{
+        display:true, anchor:'end', align:'end',
+        font:{size:10,weight:'600'}, color:'#555', formatter:v=>v
+      }
+    },
+    {
+      type:'line', label:'Tareas entregadas', order:1,
+      data:gapCounts,
+      borderColor:'#3a7d0a', backgroundColor:'transparent',
+      tension:0.35, pointRadius:4, borderWidth:2.5,
+      datalabels:{
+        display:true, anchor:'top', align:'top',
+        font:{size:9,weight:'600'}, color:'#3a7d0a', formatter:v=>v
+      }
+    },
+    {
+      type:'line', label:'Tendencia', order:2,
+      data:trend,
+      borderColor:'rgba(120,120,120,0.5)', backgroundColor:'transparent',
+      borderDash:[6,4], pointRadius:0, borderWidth:1.5,
+      datalabels:{display:false}
+    }
+  ];
+
+  const lg = document.getElementById(legendId);
+  lg.innerHTML=
+    `<div class="leg-item"><div class="leg-box" style="background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.4)"></div>Total por sprint</div>`+
+    `<div class="leg-item"><div style="width:22px;height:0;border-top:2px solid #3a7d0a;flex-shrink:0"></div>Tareas entregadas</div>`+
+    `<div class="leg-item"><div style="width:22px;height:0;border-top:2px dashed rgba(120,120,120,0.6);flex-shrink:0"></div>Tendencia</div>`;
+
+  new Chart(document.getElementById(canvasId),{
+    plugins:[DL],
+    data:{labels:SL, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, datalabels:{display:true}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:10}}, beginAtZero:true}
+      }
+    }
+  });
 }
 
-function delta(curr,prev,id,invertGood=false){
-  if(prev===null||prev===undefined){document.getElementById(id).textContent='';return;}
-  const diff=curr-prev;
-  if(diff===0){document.getElementById(id).textContent='Sin cambio';document.getElementById(id).className='metric-delta neutral';return;}
-  const up=diff>0, good=invertGood?!up:up;
-  document.getElementById(id).textContent=(up?'▲ +':'▼ ')+diff+' vs anterior';
-  document.getElementById(id).className='metric-delta '+(good?'up':'down');
-}
+buildGapChart('genGapChart','legendGenGap','genGapTotal','genGapPills', D.genGap, D.genTotals, D.genEstadoSprint);
+buildGapChart('spGapChart', 'legendSpGap', 'spGapTotal', 'spGapPills',  D.spGap,  D.spTotals,  D.spEstadoSprint);
 
-function spVals(rows,spList,estado){return spList.map(sp=>rows.filter(r=>r.sprint===sp&&r.estado===estado).length);}
-function spTotal(rows,spList){return spList.map(sp=>rows.filter(r=>r.sprint===sp).length);}
+// ── 9. Equipo Local ────────────────────────────────────────────────────────────
+let localChartInst=null;
+function shortName(n){const p=n.split(' ');return p[0]+' '+(p[1]||'');}
 
-function findSheet(wb,keywords){
-  const names=Object.keys(wb.Sheets);
-  for(const kw of keywords){const found=names.find(n=>n.toLowerCase().includes(kw.toLowerCase()));if(found)return found;}
-  return null;
-}
-
-function getRows(wb,keywords){
-  const sheetName=findSheet(wb,keywords);
-  if(!sheetName)return{rows:[],sheetName:null};
-  const sheet=wb.Sheets[sheetName];
-  const data=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
-  if(data.length<2)return{rows:[],sheetName};
-  const header=data[0].map(h=>String(h).trim().toLowerCase());
-  const idx={
-    sprint:header.findIndex(h=>h.includes('spring')||h.includes('sprint')),
-    estado:header.findIndex(h=>h==='estado'),
-    resumen:header.findIndex(h=>h==='resumen'),
-    persona:header.findIndex(h=>h.includes('persona')),
-    hw:header.findIndex(h=>h.includes('homework')),
-  };
-  const rows=data.slice(1).map(row=>({
-    sprint:normSprint(String(row[idx.sprint]||'')),
-    estado:String(row[idx.estado]||'').trim(),
-    resumen:String(row[idx.resumen]||'').trim(),
-    persona:String(row[idx.persona]||'').trim(),
-    hw:String(row[idx.hw]||'').trim(),
-  }));
-  return{rows,sheetName};
-}
-
-function getEquipo(wb){
-  const sheetName=findSheet(wb,['equipo','team']);
-  if(!sheetName)return new Set();
-  const data=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:''});
-  const local=new Set();
-  data.slice(1).forEach(row=>{const v=String(row[0]||'').trim();if(v&&v.toLowerCase()!=='local')local.add(v.toUpperCase());});
-  return local;
-}
-
-function loadFile(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const wb=XLSX.read(e.target.result,{type:'array'});
-    processData(wb,file.name);
-    document.getElementById('upload-screen').style.display='none';
-    document.getElementById('dashboard').style.display='block';
-    document.getElementById('sidebar').style.display='block';
-    document.getElementById('header-upload-label').classList.add('loaded');
-    document.getElementById('file-name').textContent=file.name;
-    setupNavObserver();
-    document.getElementById('exportBtn').style.display='inline-block';
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function processData(wb,fileName){
-  const alerts=[];
-  const {rows:general,sheetName:gnName}=getRows(wb,['estatus general','general']);
-  const {rows:porSprint,sheetName:psName}=getRows(wb,['estatus por spring','por spring','sprint']);
-  if(!gnName)alerts.push('⚠️ No se encontró la hoja "estatus general". Verifica el nombre.');
-  if(!psName)alerts.push('⚠️ No se encontró la hoja "estatus por spring". Verifica el nombre.');
-  document.getElementById('alerts').innerHTML=alerts.map(a=>`<div class="alert">${a}</div>`).join('');
-
-  const localTeam=getEquipo(wb);
-  const genFiltered=general.filter(r=>r.sprint);
-  // Normalize sprints in data
-  genFiltered.forEach(r=>r.sprint=normSprint(r.sprint));
-  porSprint.forEach(r=>r.sprint=normSprint(r.sprint));
-  const psFiltered=porSprint.filter(r=>r.sprint);
-  const sprints=SPRINT_ORDER.filter(sp=>genFiltered.some(r=>r.sprint===sp));
-  const sprintLabels=sprints.map(s=>s.replace('Sprint ','S').replace('-S',' S'));
-
-  // Comparación con carga anterior
-  const prev=prevData;
-  const ec={};genFiltered.forEach(r=>ec[r.estado]=(ec[r.estado]||0)+1);
-  const curr={total:genFiltered.length,accepted:ec['Accepted']||0,discarded:ec['Discarded']||0,blocked:ec['Blocked']||0,inprogress:ec['In Progress']||0,rtv:ec['Ready To Verify']||0,analysing:ec['Analysing']||0,other:(ec['To Rework']||0)+(ec['Test']||0)};
-
-  document.getElementById('dash-sub').textContent=`Registros con sprint asignado · ${gnName||'—'} · ${genFiltered.length} registros`;
-  document.getElementById('m-total').textContent=curr.total;
-  document.getElementById('m-accepted').textContent=curr.accepted;
-  document.getElementById('m-discarded').textContent=curr.discarded;
-  document.getElementById('m-blocked').textContent=curr.blocked;
-  document.getElementById('m-inprogress').textContent=curr.inprogress;
-  document.getElementById('m-rtv').textContent=curr.rtv;
-  document.getElementById('m-analysing').textContent=curr.analysing;
-  document.getElementById('m-other').textContent=curr.other;
-
-  if(prev){
-    delta(curr.total,prev.total,'d-total');
-    delta(curr.accepted,prev.accepted,'d-accepted');
-    delta(curr.discarded,prev.discarded,'d-discarded',true);
-    delta(curr.blocked,prev.blocked,'d-blocked',true);
-    delta(curr.inprogress,prev.inprogress,'d-inprogress',true);
-    delta(curr.rtv,prev.rtv,'d-rtv');
-    delta(curr.analysing,prev.analysing,'d-analysing',true);
-    delta(curr.other,prev.other,'d-other',true);
-  }
-  prevData=curr;
-
-  // Equipo
-  const localRows=genFiltered.filter(r=>localTeam.has(r.persona.toUpperCase()));
-  const globalRows=genFiltered.filter(r=>!localTeam.has(r.persona.toUpperCase()));
-  const nL=localRows.length,nG=globalRows.length,nT=nL+nG;
-  const pL=nT>0?Math.round(nL/nT*100):0,pG=100-pL;
-  document.getElementById('eq-total-badge').textContent=nT+' registros con sprint';
-  document.getElementById('t-local').textContent=nL;
-  document.getElementById('t-global').textContent=nG;
-  document.getElementById('t-local-pct').textContent=pL+'% del total';
-  document.getElementById('t-global-pct').textContent=pG+'% del total';
-  document.getElementById('bar-local').style.width=pL+'%';
-  document.getElementById('bar-global').style.width=pG+'%';
-  document.getElementById('bar-local-label').textContent='Local '+pL+'%';
-  document.getElementById('bar-global-label').textContent='Global '+pG+'%';
-  document.getElementById('bar-local-n').textContent=nL+' tareas';
-  document.getElementById('bar-global-n').textContent=nG+' tareas';
-
-  function mk(id,data,options){destroyChart(id);charts[id]=new Chart(document.getElementById(id),{data,options});}
-
-  // Estatus general
-  document.getElementById('c1b-count').textContent=genFiltered.length+' registros';
-  const egTotal=spTotal(genFiltered,sprints);
-  mk('c1b',{labels:sprintLabels,datasets:[barDs(sprints,egTotal),lineDs('Accepted',spVals(genFiltered,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals(genFiltered,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals(genFiltered,sprints,'In Progress'),'#EF9F27',[4,4]),lineDs('Blocked',spVals(genFiltered,sprints,'Blocked'),'#7F77DD',[2,3]),lineDs('Ready To Verify',spVals(genFiltered,sprints,'Ready To Verify'),'#185FA5',[4,4]),lineDs('Analysing',spVals(genFiltered,sprints,'Analysing'),'#1D9E75',[2,3])]},opts(5));
-
-  // GAP General
-  const gapEg=sprints.map(sp=>genFiltered.filter(r=>r.sprint===sp&&['Accepted','Ready To Verify','Discarded'].includes(r.estado)).length);
-  buildGap('cgap_general','pct-general','cgap-general-count',sprints,egTotal,gapEg);
-
-  // Estatus por sprint
-  document.getElementById('c1-count').textContent=psFiltered.length+' registros';
-  const psTotal2=spTotal(psFiltered,sprints);
-  mk('c1',{labels:sprintLabels,datasets:[barDs(sprints,psTotal2),lineDs('Accepted',spVals(psFiltered,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals(psFiltered,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals(psFiltered,sprints,'In Progress'),'#EF9F27',[4,4]),lineDs('Blocked',spVals(psFiltered,sprints,'Blocked'),'#7F77DD',[2,3])]},opts(5));
-
-  // GAP por sprint
-  const gapPs=sprints.map(sp=>psFiltered.filter(r=>r.sprint===sp&&['Accepted','Ready To Verify','Discarded'].includes(r.estado)).length);
-  buildGap('cgap_sprint','pct-sprint','cgap-sprint-count',sprints,psTotal2,gapPs);
-
-  // Análisis
-  const analRows=genFiltered.filter(r=>/an[aá]li[sz]is/i.test(r.resumen));
-  document.getElementById('c2-count').textContent=analRows.length+' registros';
-  mk('c2',{labels:sprintLabels,datasets:[barDs(sprints,spTotal(analRows,sprints)),lineDs('Accepted',spVals(analRows,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals(analRows,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('Ready To Verify',spVals(analRows,sprints,'Ready To Verify'),'#185FA5',[4,4]),lineDs('In Progress',spVals(analRows,sprints,'In Progress'),'#EF9F27',[2,4]),lineDs('Analysing',spVals(analRows,sprints,'Analysing'),'#7F77DD',[2,3])]},opts(3));
-
-  // Validación
-  const valRows=genFiltered.filter(r=>/validaci[oó]n/i.test(r.resumen));
-  document.getElementById('c3-count').textContent=valRows.length+' registros';
-  mk('c3',{labels:sprintLabels,datasets:[barDs(sprints,spTotal(valRows,sprints)),lineDs('Accepted',spVals(valRows,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals(valRows,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals(valRows,sprints,'In Progress'),'#EF9F27',[2,4]),lineDs('Blocked',spVals(valRows,sprints,'Blocked'),'#7F77DD',[4,4]),lineDs('Analysing',spVals(valRows,sprints,'Analysing'),'#185FA5',[2,3])]},opts(2));
-
-  // Equipo local
-  eqSprints=sprintLabels;
-  const localPersonas=[...new Set(localRows.map(r=>r.persona).filter(Boolean))];
-  eqData={all:{}};
-  localPersonas.forEach((p,idx)=>{
-    const vals=sprints.map(sp=>localRows.filter(r=>r.sprint===sp&&r.persona===p).length);
-    const short=p.split(' ').slice(0,2).join(' ');
-    eqData.all[short]={vals,color:PERSON_COLORS[idx%PERSON_COLORS.length]};
-    eqData[p]={};
-    const pRows=localRows.filter(r=>r.persona===p);
-    const pEstados=[...new Set(pRows.map(r=>r.estado))];
-    pEstados.forEach(est=>{
-      const vals2=sprints.map(sp=>pRows.filter(r=>r.sprint===sp&&r.estado===est).length);
-      const tot=pRows.filter(r=>r.estado===est).length;
-      const pct=Math.round(tot/pRows.length*100);
-      eqData[p][est+'  '+pct+'%']={vals:vals2,color:COLORS[est]||'#888'};
+function buildLocalChart(person){
+  const datasets=[];
+  if(!person){
+    D.localMembers.forEach((p,i)=>{
+      const c=PERSON_COLORS[i%PERSON_COLORS.length];
+      datasets.push({type:'bar',label:shortName(p),
+        data:SP.map(sp=>D.localBySprint[p][sp]),
+        backgroundColor:c+'99',borderColor:c,borderWidth:1,borderRadius:2,stack:'s',
+        datalabels:{display:false}
+      });
     });
+  } else {
+    const sd=D.localStateBySprint[person];
+    D.validStates.filter(s=>SP.some(sp=>sd[sp][s]>0)).forEach(s=>{
+      datasets.push({type:'bar',label:s,
+        data:SP.map(sp=>sd[sp][s]),
+        backgroundColor:(SC[s]?.color||'#ccc')+'99',
+        borderColor:SC[s]?.color||'#ccc',borderWidth:1,borderRadius:2,stack:'s',
+        datalabels:{display:false}
+      });
+    });
+  }
+  if(localChartInst) localChartInst.destroy();
+  localChartInst=new Chart(document.getElementById('localChart'),{
+    plugins:[DL],
+    data:{labels:SL,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{font:{size:10}}},datalabels:{display:false}},
+      scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10}}},
+              y:{stacked:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:10}}}}}
   });
-  document.getElementById('eq-badge').textContent=localRows.length+' registros';
-  const filterDiv=document.getElementById('eq-filters');
-  filterDiv.innerHTML=`<button class="fbtn active" onclick="filterEq(this,'all')">Todos</button>`+
-    localPersonas.map(p=>`<button class="fbtn" onclick="filterEq(this,'${p}')">${p.split(' ').slice(0,2).join(' ')}</button>`).join('');
-  buildEqChart('all');
-
-  // Homework delay
-  function hwCounts(rows){const c={};rows.filter(r=>r.hw).forEach(r=>{const v=parseInt(r.hw);if(!isNaN(v)&&v>0)c[v]=(c[v]||0)+1;});return c;}
-  const hwA=hwCounts(genFiltered.filter(r=>/an[aá]li[sz]is/i.test(r.resumen)));
-  const hwV=hwCounts(genFiltered.filter(r=>/validaci[oó]n/i.test(r.resumen)));
-  const maxHw=Math.max(...[...Object.keys(hwA),...Object.keys(hwV)].map(Number),1);
-  const dlabels=Array.from({length:maxHw},(_,i)=>(i+1)+' sprint'+(i>0?'s':''));
-  const adVals=Array.from({length:maxHw},(_,i)=>hwA[i+1]||0);
-  const vdVals=Array.from({length:maxHw},(_,i)=>hwV[i+1]||0);
-  const maxA=Math.max(...adVals,1),maxV=Math.max(...vdVals,1);
-  document.getElementById('ca-count').textContent=Object.values(hwA).reduce((a,b)=>a+b,0)+' tareas con retraso';
-  document.getElementById('cv-count').textContent=Object.values(hwV).reduce((a,b)=>a+b,0)+' tareas con retraso';
-  const dOpts={responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:false},datalabels:{anchor:'end',align:'end',color:'rgba(100,100,100,0.8)',font:{size:11,weight:'500'},formatter:v=>v>0?v:''}},scales:{x:{ticks:{autoSkip:false,maxRotation:35,font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:5,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}};
-  destroyChart('ca');charts['ca']=new Chart(document.getElementById('ca'),{type:'bar',data:{labels:dlabels,datasets:[{data:adVals,backgroundColor:adVals.map(v=>`rgba(24,95,165,${(0.3+0.7*(v/maxA)).toFixed(2)})`),borderRadius:4,borderSkipped:false}]},options:dOpts});
-  destroyChart('cv');charts['cv']=new Chart(document.getElementById('cv'),{type:'bar',data:{labels:dlabels,datasets:[{data:vdVals,backgroundColor:vdVals.map(v=>v>0?`rgba(29,158,117,${(0.3+0.7*(v/maxV)).toFixed(2)})`:'rgba(0,0,0,0)'),borderRadius:4,borderSkipped:false}]},options:dOpts});
-  snapshotData={fileName,sprints,sprintLabels,curr,nL,nG,nT,pL,pG,
-    genFiltered:genFiltered.map(r=>({sprint:r.sprint,estado:r.estado,resumen:r.resumen,persona:r.persona,hw:r.hw})),
-    psFiltered:psFiltered.map(r=>({sprint:r.sprint,estado:r.estado,resumen:r.resumen,persona:r.persona,hw:r.hw})),
-    localPersonas,eqDataSerialized:JSON.parse(JSON.stringify(eqData)),
-    dlabels,adVals,vdVals,localTeamArray:[...localTeam]};
+  document.getElementById('legendLocal').innerHTML='';
 }
 
-function buildEqChart(persona){
-  const d=eqData[persona]||eqData['all'];
-  destroyChart('c4');
-  // Sort by weighted average across sprints (larger totals at bottom)
-  const sorted=Object.entries(d).sort((a,b)=>{
-    const vA=a[1].vals||a[1].data||[], vB=b[1].vals||b[1].data||[];
-    const totA=vA.reduce((s,v)=>s+v,0), totB=vB.reduce((s,v)=>s+v,0);
-    const avgA=vA.reduce((s,v,i)=>s+v*(i+1),0)/Math.max(totA,1);
-    const avgB=vB.reduce((s,v,i)=>s+v*(i+1),0)/Math.max(totB,1);
-    return totB-totA||avgA-avgB;
+(()=>{
+  const fr=document.getElementById('localFilters');
+  const mkBtn=(txt,active,fn)=>{
+    const b=document.createElement('button');
+    b.className='filter-btn'+(active?' active':'');
+    b.textContent=txt; b.onclick=()=>{
+      document.querySelectorAll('#localFilters .filter-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active'); fn();
+    };
+    fr.appendChild(b);
+  };
+  mkBtn('Todos',true,()=>buildLocalChart(null));
+  D.localMembers.forEach(p=>mkBtn(shortName(p),false,()=>buildLocalChart(p)));
+  buildLocalChart(null);
+})();
+
+// ── 10/11. Homework delay ──────────────────────────────────────────────────────
+function buildHwChart(id,hw){
+  const keys=Object.keys(hw).map(Number).sort((a,b)=>a-b);
+  new Chart(document.getElementById(id),{
+    plugins:[DL],
+    type:'bar',
+    data:{labels:keys.map(k=>k+' día'+(k>1?'s':'')),
+      datasets:[{data:keys.map(k=>hw[k]),
+        backgroundColor:keys.map(k=>k<=2?'#1D9E75':k<=4?'#EF9F27':'#E24B4A'),
+        borderWidth:0,borderRadius:4,
+        datalabels:{display:true,anchor:'end',align:'top',font:{size:11,weight:'600'},color:'#333',formatter:v=>v}
+      }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},datalabels:{display:true}},
+      scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11}}},
+              y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:10}},beginAtZero:true}}}
   });
-  const datasets=sorted.map(([label,{vals,data,color}])=>{const d2=vals||data;return{label,data:d2,backgroundColor:color,borderRadius:3,borderSkipped:false,datalabels:{display:ctx=>d2[ctx.dataIndex]>0,color:'#fff',font:{size:10,weight:'500'},formatter:v=>v}};});
-  charts['c4']=new Chart(document.getElementById('c4'),{type:'bar',data:{labels:eqSprints,datasets},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:16}},plugins:{legend:{display:false},datalabels:{},tooltip:{callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);const pct=t>0?Math.round(ctx.parsed.y/t*100):0;return` ${ctx.dataset.label}: ${ctx.parsed.y} (${pct}% de esta persona)`},footer:items=>'Total sprint: '+items.reduce((s,i)=>s+i.parsed.y,0)}}},scales:{x:{stacked:true,ticks:{autoSkip:false,maxRotation:35,font:{size:10}},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{stepSize:5,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}}});
-  document.getElementById('eq-legend').innerHTML=sorted.map(([label,{color}])=>`<span><span class="lsq" style="background:${color}"></span>${label}</span>`).join('');
 }
+buildHwChart('hwAnChart',D.hwAnalisis);
+buildHwChart('hwValChart',D.hwValidacion);
 
-
-function spVals2(rows,spList,estado){
-  return spList.map(function(sp){return rows.filter(function(r){return r.sprint===sp&&(estado===null||r.estado===estado);}).length;});
-}
-
-function exportSnapshot(){
-  if(!snapshotData){alert('Carga un Excel primero.');return;}
-  var snapJson=JSON.stringify(snapshotData).replace(/<\/script>/gi,'<\\/script>');
-  var now=new Date();
-  var stamp=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  var filename='dashboard_sprints_snapshot_'+stamp+'.html';
-  var b64El=document.getElementById('__src_b64__');
-  var srcHtml=decodeURIComponent(escape(atob(b64El.textContent.trim())));
-  var scOpen='<'+'script>';
-  var scClose='<'+'/'+'script>';
-  var bdClose='<'+'/body>';
-  var inject=scOpen+'\n(function(){\n  var SNAP='+snapJson+';\n'+
-    '  function init(){\n'+
-    '    document.getElementById("upload-screen").style.display="none";\n'+
-    '    document.getElementById("dashboard").style.display="block";\n'+
-    '    document.getElementById("sidebar").style.display="block";\n'+
-    '    var eb=document.getElementById("exportBtn");if(eb)eb.style.display="inline-block";\n'+
-    '    var fn=document.getElementById("file-name");if(fn)fn.textContent=SNAP.fileName||"snapshot";\n'+
-    '    var ul=document.getElementById("header-upload-label");if(ul)ul.classList.add("loaded");\n'+
-    '    restoreFromSnapshot(SNAP);\n'+
-    '  }\n'+
-    '  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init);}\n'+
-    '  else{setTimeout(init,0);}\n'+
-    '})();\n'+scClose;
-  var lastBody=srcHtml.lastIndexOf(bdClose);
-  var finalHtml=srcHtml.slice(0,lastBody)+inject+'\n'+bdClose+srcHtml.slice(lastBody+bdClose.length);
-  var blob=new Blob([finalHtml],{type:'text/html;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download=filename;a.click();
-  URL.revokeObjectURL(url);
-}
-
-function restoreFromSnapshot(snap){
-  var sprints=snap.sprints,sprintLabels=snap.sprintLabels,curr=snap.curr,
-      nL=snap.nL,nG=snap.nG,nT=snap.nT,pL=snap.pL,
-      genFiltered=snap.genFiltered,psFiltered=snap.psFiltered,
-      localPersonas=snap.localPersonas,eqDataSerialized=snap.eqDataSerialized,
-      dlabels=snap.dlabels,adVals=snap.adVals,vdVals=snap.vdVals;
-  document.getElementById('dash-sub').textContent='Snapshot \u00b7 '+genFiltered.length+' registros con sprint';
-  document.getElementById('m-total').textContent=curr.total;
-  document.getElementById('m-accepted').textContent=curr.accepted;
-  document.getElementById('m-discarded').textContent=curr.discarded;
-  document.getElementById('m-blocked').textContent=curr.blocked;
-  document.getElementById('m-inprogress').textContent=curr.inprogress;
-  document.getElementById('m-rtv').textContent=curr.rtv;
-  document.getElementById('m-analysing').textContent=curr.analysing;
-  document.getElementById('m-other').textContent=curr.other;
-  document.getElementById('eq-total-badge').textContent=nT+' registros con sprint';
-  document.getElementById('t-local').textContent=nL;
-  document.getElementById('t-global').textContent=nG;
-  document.getElementById('t-local-pct').textContent=pL+'% del total';
-  document.getElementById('t-global-pct').textContent=(100-pL)+'% del total';
-  document.getElementById('bar-local').style.width=pL+'%';
-  document.getElementById('bar-global').style.width=(100-pL)+'%';
-  document.getElementById('bar-local-label').textContent='Local '+pL+'%';
-  document.getElementById('bar-global-label').textContent='Global '+(100-pL)+'%';
-  document.getElementById('bar-local-n').textContent=nL+' tareas';
-  document.getElementById('bar-global-n').textContent=nG+' tareas';
-  function mk(id,data,options){destroyChart(id);charts[id]=new Chart(document.getElementById(id),{data,options});}
-  document.getElementById('c1b-count').textContent=genFiltered.length+' registros';
-  var egTotal=spVals2(genFiltered,sprints,null);
-  mk('c1b',{labels:sprintLabels,datasets:[barDs(sprints,egTotal),lineDs('Accepted',spVals2(genFiltered,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals2(genFiltered,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals2(genFiltered,sprints,'In Progress'),'#EF9F27',[4,4]),lineDs('Blocked',spVals2(genFiltered,sprints,'Blocked'),'#7F77DD',[2,3]),lineDs('Ready To Verify',spVals2(genFiltered,sprints,'Ready To Verify'),'#185FA5',[4,4]),lineDs('Analysing',spVals2(genFiltered,sprints,'Analysing'),'#1D9E75',[2,3])]},opts(5));
-  var gapEg=sprints.map(function(sp){return genFiltered.filter(function(r){return r.sprint===sp&&['Accepted','Ready To Verify','Discarded'].includes(r.estado);}).length;});
-  buildGap('cgap_general','pct-general','cgap-general-count',sprints,egTotal,gapEg);
-  document.getElementById('c1-count').textContent=psFiltered.length+' registros';
-  var psTotal2=spVals2(psFiltered,sprints,null);
-  mk('c1',{labels:sprintLabels,datasets:[barDs(sprints,psTotal2),lineDs('Accepted',spVals2(psFiltered,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals2(psFiltered,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals2(psFiltered,sprints,'In Progress'),'#EF9F27',[4,4]),lineDs('Blocked',spVals2(psFiltered,sprints,'Blocked'),'#7F77DD',[2,3])]},opts(5));
-  var gapPs=sprints.map(function(sp){return psFiltered.filter(function(r){return r.sprint===sp&&['Accepted','Ready To Verify','Discarded'].includes(r.estado);}).length;});
-  buildGap('cgap_sprint','pct-sprint','cgap-sprint-count',sprints,psTotal2,gapPs);
-  var analRows=genFiltered.filter(function(r){return /an[a\u00e1]li[sz]is/i.test(r.resumen);});
-  document.getElementById('c2-count').textContent=analRows.length+' registros';
-  mk('c2',{labels:sprintLabels,datasets:[barDs(sprints,spVals2(analRows,sprints,null)),lineDs('Accepted',spVals2(analRows,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals2(analRows,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('Ready To Verify',spVals2(analRows,sprints,'Ready To Verify'),'#185FA5',[4,4]),lineDs('In Progress',spVals2(analRows,sprints,'In Progress'),'#EF9F27',[2,4]),lineDs('Analysing',spVals2(analRows,sprints,'Analysing'),'#7F77DD',[2,3])]},opts(3));
-  var valRows=genFiltered.filter(function(r){return /validaci[o\u00f3]n/i.test(r.resumen);});
-  document.getElementById('c3-count').textContent=valRows.length+' registros';
-  mk('c3',{labels:sprintLabels,datasets:[barDs(sprints,spVals2(valRows,sprints,null)),lineDs('Accepted',spVals2(valRows,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals2(valRows,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals2(valRows,sprints,'In Progress'),'#EF9F27',[2,4]),lineDs('Blocked',spVals2(valRows,sprints,'Blocked'),'#7F77DD',[4,4]),lineDs('Analysing',spVals2(valRows,sprints,'Analysing'),'#185FA5',[2,3])]},opts(2));
-  eqSprints=sprintLabels;
-  eqData=eqDataSerialized;
-  document.getElementById('eq-badge').textContent=nL+' registros';
-  var filterDiv=document.getElementById('eq-filters');
-  filterDiv.innerHTML='<button class="fbtn active" onclick="filterEq(this,\'all\')">Todos</button>'+
-    (localPersonas||[]).map(function(p){return '<button class="fbtn" onclick="filterEq(this,\''+p.replace(/'/g,"\\'")+'\'">'+p.split(' ').slice(0,2).join(' ')+'</button>';}).join('');
-  buildEqChart('all');
-  var maxA=Math.max.apply(null,adVals.concat([1])),maxV=Math.max.apply(null,vdVals.concat([1]));
-  document.getElementById('ca-count').textContent=adVals.reduce(function(a,b){return a+b;},0)+' tareas con retraso';
-  document.getElementById('cv-count').textContent=vdVals.reduce(function(a,b){return a+b;},0)+' tareas con retraso';
-  var dO={responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:false},datalabels:{anchor:'end',align:'end',color:'rgba(100,100,100,0.8)',font:{size:11,weight:'500'},formatter:function(v){return v>0?v:''}}},scales:{x:{ticks:{autoSkip:false,maxRotation:35,font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:5,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}};
-  destroyChart('ca');charts['ca']=new Chart(document.getElementById('ca'),{type:'bar',data:{labels:dlabels,datasets:[{data:adVals,backgroundColor:adVals.map(function(v){return 'rgba(24,95,165,'+(0.3+0.7*(v/maxA)).toFixed(2)+')';}),borderRadius:4,borderSkipped:false}]},options:dO});
-  destroyChart('cv');charts['cv']=new Chart(document.getElementById('cv'),{type:'bar',data:{labels:dlabels,datasets:[{data:vdVals,backgroundColor:vdVals.map(function(v){return v>0?'rgba(29,158,117,'+(0.3+0.7*(v/maxV)).toFixed(2)+')':'rgba(0,0,0,0)';}),borderRadius:4,borderSkipped:false}]},options:dO});
-  setupNavObserver();
-}
-
-function filterEq(btn,persona){
-  document.querySelectorAll('#eq-filters .fbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  currentPersona=persona;
-  buildEqChart(persona);
-  const rows=persona==='all'?Object.values(eqData.all):Object.values(eqData[persona]||{});
-  const total=rows.reduce((s,{vals})=>s+vals.reduce((a,b)=>a+b,0),0);
-  document.getElementById('eq-badge').textContent=total+' registros';
-}
+// ── Active nav ─────────────────────────────────────────────────────────────────
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){
+    document.querySelectorAll('#sidebar a').forEach(a=>a.classList.remove('active'));
+    const a=document.querySelector(`#sidebar a[href="#${e.target.id}"]`);
+    if(a)a.classList.add('active');
+  }});
+},{threshold:0.2});
+document.querySelectorAll('.section[id]').forEach(s=>obs.observe(s));
 </script>
-
-<script id="__src_b64__" type="text/plain">PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVzIj4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9IlVURi04Ij4KPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiPgo8dGl0bGU+RGFzaGJvYXJkIGRlIFNwcmludHM8L3RpdGxlPgo8c2NyaXB0IHNyYz0iaHR0cHM6Ly9jZG5qcy5jbG91ZGZsYXJlLmNvbS9hamF4L2xpYnMvQ2hhcnQuanMvNC40LjEvY2hhcnQudW1kLmpzIj48L3NjcmlwdD4KPHNjcmlwdCBzcmM9Imh0dHBzOi8vY2RuanMuY2xvdWRmbGFyZS5jb20vYWpheC9saWJzL2NoYXJ0anMtcGx1Z2luLWRhdGFsYWJlbHMvMi4yLjAvY2hhcnRqcy1wbHVnaW4tZGF0YWxhYmVscy5taW4uanMiPjwvc2NyaXB0Pgo8c2NyaXB0IHNyYz0iaHR0cHM6Ly9jZG5qcy5jbG91ZGZsYXJlLmNvbS9hamF4L2xpYnMveGxzeC8wLjE4LjUveGxzeC5mdWxsLm1pbi5qcyI+PC9zY3JpcHQ+CjxzdHlsZT4KKiwqOjpiZWZvcmUsKjo6YWZ0ZXJ7Ym94LXNpemluZzpib3JkZXItYm94O21hcmdpbjowO3BhZGRpbmc6MH0KYm9keXtmb250LWZhbWlseTotYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCwnU2Vnb2UgVUknLHNhbnMtc2VyaWY7YmFja2dyb3VuZDojZjVmNWYzO2NvbG9yOiMxYTFhMWE7bWluLWhlaWdodDoxMDB2aDtkaXNwbGF5OmZsZXg7ZmxleC1kaXJlY3Rpb246Y29sdW1ufQpoZWFkZXJ7YmFja2dyb3VuZDojZmZmO2JvcmRlci1ib3R0b206MC41cHggc29saWQgI2UwZTBkYztwYWRkaW5nOjFyZW0gMnJlbTtkaXNwbGF5OmZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2p1c3RpZnktY29udGVudDpzcGFjZS1iZXR3ZWVuO2ZsZXgtd3JhcDp3cmFwO2dhcDoxcmVtO3Bvc2l0aW9uOnN0aWNreTt0b3A6MDt6LWluZGV4OjEwMH0KaGVhZGVyIGgxe2ZvbnQtc2l6ZToxN3B4O2ZvbnQtd2VpZ2h0OjUwMH0KLmhlYWRlci1yaWdodHtkaXNwbGF5OmZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2dhcDoxMnB4fQoudXBsb2FkLWJ0bntib3JkZXI6MC41cHggc29saWQgI2NjYztib3JkZXItcmFkaXVzOjZweDtwYWRkaW5nOjZweCAxNHB4O2ZvbnQtc2l6ZToxMnB4O2NvbG9yOiM1NTU7Y3Vyc29yOnBvaW50ZXI7dHJhbnNpdGlvbjphbGwgMC4ycztiYWNrZ3JvdW5kOiNmZmZ9Ci51cGxvYWQtYnRuOmhvdmVye2JvcmRlci1jb2xvcjojMTg1RkE1O2NvbG9yOiMxODVGQTU7YmFja2dyb3VuZDojZjBmNmZmfQoudXBsb2FkLWJ0bi5sb2FkZWR7Ym9yZGVyLWNvbG9yOiMzQjZEMTE7Y29sb3I6IzNCNkQxMTtiYWNrZ3JvdW5kOiNmMGY3ZTh9Ci51cGxvYWQtYnRuIGlucHV0e2Rpc3BsYXk6bm9uZX0KbmF2e3dpZHRoOjIyMHB4O2ZsZXgtc2hyaW5rOjA7cG9zaXRpb246c3RpY2t5O3RvcDo2NHB4O2hlaWdodDpjYWxjKDEwMHZoIC0gNjRweCk7b3ZlcmZsb3cteTphdXRvO3BhZGRpbmc6MS41cmVtIDFyZW07Ym9yZGVyLXJpZ2h0OjAuNXB4IHNvbGlkICNlMGUwZGM7YmFja2dyb3VuZDojZmZmfQpuYXYgaDJ7Zm9udC1zaXplOjExcHg7dGV4dC10cmFuc2Zvcm06dXBwZXJjYXNlO2xldHRlci1zcGFjaW5nOjAuMDZlbTtjb2xvcjojYWFhO21hcmdpbi1ib3R0b206MC43NXJlbTtwYWRkaW5nLWxlZnQ6OHB4fQoubmF2LWl0ZW17ZGlzcGxheTpibG9jaztwYWRkaW5nOjZweCAxMHB4O2ZvbnQtc2l6ZToxMnB4O2NvbG9yOiM1NTU7Ym9yZGVyLXJhZGl1czo2cHg7Y3Vyc29yOnBvaW50ZXI7bWFyZ2luLWJvdHRvbToycHg7dHJhbnNpdGlvbjphbGwgMC4xNXM7dGV4dC1kZWNvcmF0aW9uOm5vbmU7Ym9yZGVyOm5vbmU7YmFja2dyb3VuZDpub25lO3dpZHRoOjEwMCU7dGV4dC1hbGlnbjpsZWZ0fQoubmF2LWl0ZW06aG92ZXJ7YmFja2dyb3VuZDojZjVmNWYzO2NvbG9yOiMxYTFhMWF9Ci5uYXYtaXRlbS5hY3RpdmV7YmFja2dyb3VuZDojZTZmMWZiO2NvbG9yOiMxODVGQTU7Zm9udC13ZWlnaHQ6NTAwfQoubWFpbi1sYXlvdXR7ZGlzcGxheTpmbGV4O2ZsZXg6MX0KLmNvbnRlbnR7ZmxleDoxO21pbi13aWR0aDowO3BhZGRpbmc6MS41cmVtIDJyZW19Ci5jb250YWluZXJ7bWF4LXdpZHRoOjkwMHB4O21hcmdpbjowIGF1dG99Ci5tZXRyaWMtZ3JpZHtkaXNwbGF5OmdyaWQ7Z3JpZC10ZW1wbGF0ZS1jb2x1bW5zOnJlcGVhdCg0LDFmcik7Z2FwOjEwcHg7bWFyZ2luLWJvdHRvbToxMHB4fQoubWV0cmlje2JhY2tncm91bmQ6I2ZmZjtib3JkZXItcmFkaXVzOjhweDtwYWRkaW5nOjE0cHggMTZweDtib3JkZXI6MC41cHggc29saWQgI2U4ZThlNDtwb3NpdGlvbjpyZWxhdGl2ZX0KLm1ldHJpYy1sYWJlbHtmb250LXNpemU6MTFweDtjb2xvcjojODg4O21hcmdpbi1ib3R0b206NHB4O3RleHQtdHJhbnNmb3JtOnVwcGVyY2FzZTtsZXR0ZXItc3BhY2luZzowLjA0ZW19Ci5tZXRyaWMtdmFse2ZvbnQtc2l6ZToyNHB4O2ZvbnQtd2VpZ2h0OjUwMH0KLm1ldHJpYy12YWwuZ3JlZW57Y29sb3I6IzNCNkQxMX0ubWV0cmljLXZhbC5yZWR7Y29sb3I6I0EzMkQyRH0ubWV0cmljLXZhbC5hbWJlcntjb2xvcjojODU0RjBCfS5tZXRyaWMtdmFsLnB1cnBsZXtjb2xvcjojM0MzNDg5fQoubWV0cmljLWRlbHRhe2ZvbnQtc2l6ZToxMXB4O21hcmdpbi10b3A6NHB4O2ZvbnQtd2VpZ2h0OjUwMH0KLm1ldHJpYy1kZWx0YS51cHtjb2xvcjojM0I2RDExfS5tZXRyaWMtZGVsdGEuZG93bntjb2xvcjojQTMyRDJEfS5tZXRyaWMtZGVsdGEubmV1dHJhbHtjb2xvcjojODg4fQouc2VjdGlvbntiYWNrZ3JvdW5kOiNmZmY7Ym9yZGVyLXJhZGl1czoxMHB4O2JvcmRlcjowLjVweCBzb2xpZCAjZThlOGU0O3BhZGRpbmc6MS4yNXJlbSAxLjVyZW07bWFyZ2luLWJvdHRvbToxLjI1cmVtO3Njcm9sbC1tYXJnaW4tdG9wOjgwcHh9Ci5zZWN0aW9uLWhlYWRlcntkaXNwbGF5OmZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2p1c3RpZnktY29udGVudDpzcGFjZS1iZXR3ZWVuO21hcmdpbi1ib3R0b206MTBweH0KLnNlY3Rpb24tdGl0bGV7Zm9udC1zaXplOjE0cHg7Zm9udC13ZWlnaHQ6NTAwfQouc2VjdGlvbi1jb3VudHtmb250LXNpemU6MTFweDtjb2xvcjojODg4O2JhY2tncm91bmQ6I2Y1ZjVmMztwYWRkaW5nOjJweCA4cHg7Ym9yZGVyLXJhZGl1czo2cHh9Ci5sZWdlbmR7ZGlzcGxheTpmbGV4O2ZsZXgtd3JhcDp3cmFwO2dhcDoxMHB4O21hcmdpbi1ib3R0b206MTBweDtmb250LXNpemU6MTFweDtjb2xvcjojNjY2fQoubGVnZW5kIHNwYW57ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtnYXA6NHB4fQoubHNxe3dpZHRoOjEwcHg7aGVpZ2h0OjEwcHg7Ym9yZGVyLXJhZGl1czoycHg7ZGlzcGxheTppbmxpbmUtYmxvY2t9Ci5sbG57d2lkdGg6MThweDtoZWlnaHQ6MDtkaXNwbGF5OmlubGluZS1ibG9ja30KLmNoYXJ0LXdyYXB7cG9zaXRpb246cmVsYXRpdmU7d2lkdGg6MTAwJX0KLnBjdC1yb3d7ZGlzcGxheTpmbGV4O2ZsZXgtd3JhcDp3cmFwO2dhcDo2cHg7bWFyZ2luLWJvdHRvbToxMnB4fQoucGN0LXBpbGx7ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtnYXA6NHB4O2ZvbnQtc2l6ZToxMXB4O2JhY2tncm91bmQ6I2Y1ZjVmMztwYWRkaW5nOjNweCA4cHg7Ym9yZGVyLXJhZGl1czo1cHh9Ci50ZWFtLWNhcmRze2Rpc3BsYXk6Z3JpZDtncmlkLXRlbXBsYXRlLWNvbHVtbnM6MWZyIDFmcjtnYXA6MTBweDttYXJnaW4tYm90dG9tOjEycHh9Ci50ZWFtLWNhcmR7YmFja2dyb3VuZDojZjVmNWYzO2JvcmRlci1yYWRpdXM6OHB4O3BhZGRpbmc6MTRweH0KLnRlYW0tbGFiZWx7Zm9udC1zaXplOjExcHg7Y29sb3I6Izg4ODttYXJnaW4tYm90dG9tOjRweH0KLnRlYW0tdmFse2ZvbnQtc2l6ZToyNHB4O2ZvbnQtd2VpZ2h0OjUwMDttYXJnaW4tYm90dG9tOjJweH0KLmZpbHRlci1yb3d7ZGlzcGxheTpmbGV4O2ZsZXgtd3JhcDp3cmFwO2dhcDo2cHg7bWFyZ2luLWJvdHRvbToxMHB4fQouZmJ0bntwYWRkaW5nOjRweCAxMnB4O2ZvbnQtc2l6ZToxMXB4O2JvcmRlci1yYWRpdXM6MjBweDtib3JkZXI6MC41cHggc29saWQgI2NjYztiYWNrZ3JvdW5kOiNmZmY7Y29sb3I6IzY2NjtjdXJzb3I6cG9pbnRlcjt0cmFuc2l0aW9uOmFsbCAwLjE1c30KLmZidG4uYWN0aXZle2JhY2tncm91bmQ6I2U2ZjFmYjtjb2xvcjojMTg1RkE1O2JvcmRlci1jb2xvcjojMTg1RkE1O2ZvbnQtd2VpZ2h0OjUwMH0KLmNoYXJ0LXN1Yntmb250LXNpemU6MTFweDtjb2xvcjojODg4O21hcmdpbi1ib3R0b206MTBweH0KLnRyZW5kLWxpbmV7c3Ryb2tlLWRhc2hhcnJheTo1LDN9CiN1cGxvYWQtc2NyZWVue2Rpc3BsYXk6ZmxleDtmbGV4LWRpcmVjdGlvbjpjb2x1bW47YWxpZ24taXRlbXM6Y2VudGVyO2p1c3RpZnktY29udGVudDpjZW50ZXI7bWluLWhlaWdodDo3MHZoO3RleHQtYWxpZ246Y2VudGVyO2dhcDoxcmVtO3BhZGRpbmc6MnJlbX0KI3VwbG9hZC1zY3JlZW4gaDJ7Zm9udC1zaXplOjIycHg7Zm9udC13ZWlnaHQ6NTAwfQojdXBsb2FkLXNjcmVlbiBwe2ZvbnQtc2l6ZToxM3B4O2NvbG9yOiM4ODg7bWF4LXdpZHRoOjQyMHB4O2xpbmUtaGVpZ2h0OjEuNn0KLnVwbG9hZC1iaWd7Ym9yZGVyOjJweCBkYXNoZWQgI2RkZDtib3JkZXItcmFkaXVzOjE0cHg7cGFkZGluZzoyLjVyZW0gMy41cmVtO2N1cnNvcjpwb2ludGVyO3RyYW5zaXRpb246YWxsIDAuMnM7ZGlzcGxheTppbmxpbmUtYmxvY2t9Ci51cGxvYWQtYmlnOmhvdmVye2JvcmRlci1jb2xvcjojMTg1RkE1O2JhY2tncm91bmQ6I2YwZjZmZn0KLnVwbG9hZC1iaWcgaW5wdXR7ZGlzcGxheTpub25lfQoudXBsb2FkLWJpZyAuaWNvbntmb250LXNpemU6NDBweDttYXJnaW4tYm90dG9tOjAuNzVyZW19Ci51cGxvYWQtYmlnIC5sYWJlbHtmb250LXNpemU6MTRweDtjb2xvcjojMTg1RkE1O2ZvbnQtd2VpZ2h0OjUwMDttYXJnaW4tYm90dG9tOjRweH0KLnVwbG9hZC1iaWcgLmhpbnR7Zm9udC1zaXplOjEycHg7Y29sb3I6I2FhYX0KI2Rhc2hib2FyZHtkaXNwbGF5Om5vbmV9Ci5hbGVydHtiYWNrZ3JvdW5kOiNmZmY4ZTY7Ym9yZGVyOjAuNXB4IHNvbGlkICNmNWM1MTg7Ym9yZGVyLXJhZGl1czo4cHg7cGFkZGluZzoxMHB4IDE0cHg7Zm9udC1zaXplOjEycHg7Y29sb3I6Izg1NEYwQjttYXJnaW4tYm90dG9tOjFyZW19Ci5kaXZpZGVyLXNte2hlaWdodDowLjVweDtiYWNrZ3JvdW5kOiNmMGYwZWM7bWFyZ2luOjFyZW0gMH0KZm9vdGVye3RleHQtYWxpZ246Y2VudGVyO3BhZGRpbmc6MS41cmVtO2ZvbnQtc2l6ZToxMXB4O2NvbG9yOiNiYmI7Ym9yZGVyLXRvcDowLjVweCBzb2xpZCAjZThlOGU0O2JhY2tncm91bmQ6I2ZmZjttYXJnaW4tdG9wOmF1dG99CkBtZWRpYShtYXgtd2lkdGg6NzY4cHgpewogIG5hdntkaXNwbGF5Om5vbmV9CiAgLm1ldHJpYy1ncmlke2dyaWQtdGVtcGxhdGUtY29sdW1uczpyZXBlYXQoMiwxZnIpfQogIC50ZWFtLWNhcmRze2dyaWQtdGVtcGxhdGUtY29sdW1uczoxZnJ9CiAgLmNvbnRlbnR7cGFkZGluZzoxcmVtfQp9Cjwvc3R5bGU+CjwvaGVhZD4KPGJvZHk+Cgo8aGVhZGVyPgogIDxoMT7wn5OKIERhc2hib2FyZCBkZSBzcHJpbnRzPC9oMT4KICA8ZGl2IGNsYXNzPSJoZWFkZXItcmlnaHQiPgogICAgPHNwYW4gaWQ9ImZpbGUtbmFtZSIgc3R5bGU9ImZvbnQtc2l6ZToxMnB4O2NvbG9yOiM4ODgiPjwvc3Bhbj4KICAgIDxsYWJlbCBjbGFzcz0idXBsb2FkLWJ0biIgaWQ9ImhlYWRlci11cGxvYWQtbGFiZWwiPgogICAgICDwn5OCIENhcmdhciBFeGNlbAogICAgICA8aW5wdXQgdHlwZT0iZmlsZSIgYWNjZXB0PSIueGxzeCwueGxzIiBvbmNoYW5nZT0ibG9hZEZpbGUodGhpcykiPgogICAgPC9sYWJlbD4KICA8L2Rpdj4KPC9oZWFkZXI+Cgo8ZGl2IGNsYXNzPSJtYWluLWxheW91dCI+CgogIDwhLS0gTmF2IGxhdGVyYWwgLS0+CiAgPG5hdiBpZD0ic2lkZWJhciIgc3R5bGU9ImRpc3BsYXk6bm9uZSI+CiAgICA8aDI+U2VjY2lvbmVzPC9oMj4KICAgIDxidXR0b24gY2xhc3M9Im5hdi1pdGVtIGFjdGl2ZSIgb25jbGljaz0ic2Nyb2xsVG8oJ3NlYy1tZXRyaWNhcycpIj5Nw6l0cmljYXMgZ2VuZXJhbGVzPC9idXR0b24+CiAgICA8YnV0dG9uIGNsYXNzPSJuYXYtaXRlbSIgb25jbGljaz0ic2Nyb2xsVG8oJ3NlYy1lcXVpcG8nKSI+RGlzdHJpYnVjacOzbiBwb3IgZXF1aXBvPC9idXR0b24+CiAgICA8YnV0dG9uIGNsYXNzPSJuYXYtaXRlbSIgb25jbGljaz0ic2Nyb2xsVG8oJ3NlYy1lZycpIj5Fc3RhdHVzIGdlbmVyYWw8L2J1dHRvbj4KICAgIDxidXR0b24gY2xhc3M9Im5hdi1pdGVtIiBvbmNsaWNrPSJzY3JvbGxUbygnc2VjLWdhcC1nZW5lcmFsJykiPkdBUCBHZW5lcmFsPC9idXR0b24+CiAgICA8YnV0dG9uIGNsYXNzPSJuYXYtaXRlbSIgb25jbGljaz0ic2Nyb2xsVG8oJ3NlYy1lcHMnKSI+RXN0YXR1cyBwb3Igc3ByaW50PC9idXR0b24+CiAgICA8YnV0dG9uIGNsYXNzPSJuYXYtaXRlbSIgb25jbGljaz0ic2Nyb2xsVG8oJ3NlYy1nYXAtc3ByaW50JykiPkdBUCBwb3Igc3ByaW50PC9idXR0b24+CiAgICA8YnV0dG9uIGNsYXNzPSJuYXYtaXRlbSIgb25jbGljaz0ic2Nyb2xsVG8oJ3NlYy1hbmFsaXNpcycpIj5BbsOhbGlzaXM8L2J1dHRvbj4KICAgIDxidXR0b24gY2xhc3M9Im5hdi1pdGVtIiBvbmNsaWNrPSJzY3JvbGxUbygnc2VjLXZhbGlkYWNpb24nKSI+VmFsaWRhY2nDs248L2J1dHRvbj4KICAgIDxidXR0b24gY2xhc3M9Im5hdi1pdGVtIiBvbmNsaWNrPSJzY3JvbGxUbygnc2VjLWxvY2FsJykiPkVxdWlwbyBsb2NhbDwvYnV0dG9uPgogICAgPGJ1dHRvbiBjbGFzcz0ibmF2LWl0ZW0iIG9uY2xpY2s9InNjcm9sbFRvKCdzZWMtZGVsYXktYScpIj5SZXRyYXNvIGFuw6FsaXNpczwvYnV0dG9uPgogICAgPGJ1dHRvbiBjbGFzcz0ibmF2LWl0ZW0iIG9uY2xpY2s9InNjcm9sbFRvKCdzZWMtZGVsYXktdicpIj5SZXRyYXNvIHZhbGlkYWNpw7NuPC9idXR0b24+CiAgPC9uYXY+CgogIDxkaXYgY2xhc3M9ImNvbnRlbnQiPgogICAgPGRpdiBjbGFzcz0iY29udGFpbmVyIj4KCiAgICAgIDwhLS0gUGFudGFsbGEgZGUgY2FyZ2EgLS0+CiAgICAgIDxkaXYgaWQ9InVwbG9hZC1zY3JlZW4iPgogICAgICAgIDxoMj5DYXJnYSB0dSBhcmNoaXZvIEV4Y2VsPC9oMj4KICAgICAgICA8cD5FbCBkYXNoYm9hcmQgZGV0ZWN0YSBhdXRvbcOhdGljYW1lbnRlIGxhcyBob2phcyB5IGdlbmVyYSB0b2RhcyBsYXMgZ3LDoWZpY2FzLiBMb3MgZGF0b3Mgc2UgcHJvY2VzYW4gZW4gdHUgbmF2ZWdhZG9yIOKAlCBudW5jYSBzYWxlbiBkZSB0dSBjb21wdXRhZG9yYS48L3A+CiAgICAgICAgPGxhYmVsIGNsYXNzPSJ1cGxvYWQtYmlnIj4KICAgICAgICAgIDxpbnB1dCB0eXBlPSJmaWxlIiBhY2NlcHQ9Ii54bHN4LC54bHMiIG9uY2hhbmdlPSJsb2FkRmlsZSh0aGlzKSI+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJpY29uIj7wn5OKPC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJsYWJlbCI+U2VsZWNjaW9uYXIgYXJjaGl2byBFeGNlbDwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0iaGludCI+dmVyc2lvbkVkaXRhZGFDb25EYXRvc0ZpbmFsZXMueGxzeCBvIHNpbWlsYXI8L2Rpdj4KICAgICAgICA8L2xhYmVsPgogICAgICAgIDxwIHN0eWxlPSJmb250LXNpemU6MTFweDtjb2xvcjojY2NjO21hcmdpbi10b3A6MC41cmVtIj5Qcml2YWRvIMK3IHNpbiBjb25leGnDs24gYWwgc2Vydmlkb3I8L3A+CiAgICAgIDwvZGl2PgoKICAgICAgPCEtLSBEYXNoYm9hcmQgLS0+CiAgICAgIDxkaXYgaWQ9ImRhc2hib2FyZCI+CgogICAgICAgIDxkaXYgaWQ9ImFsZXJ0cyI+PC9kaXY+CgogICAgICAgIDwhLS0gTcOpdHJpY2FzIC0tPgogICAgICAgIDxkaXYgaWQ9InNlYy1tZXRyaWNhcyIgc3R5bGU9InNjcm9sbC1tYXJnaW4tdG9wOjgwcHg7bWFyZ2luLWJvdHRvbToxLjI1cmVtIj4KICAgICAgICAgIDxkaXYgc3R5bGU9ImZvbnQtc2l6ZToxMnB4O2NvbG9yOiNhYWE7bWFyZ2luLWJvdHRvbTowLjc1cmVtIiBpZD0iZGFzaC1zdWIiPuKAlDwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0ibWV0cmljLWdyaWQiPgogICAgICAgICAgICA8ZGl2IGNsYXNzPSJtZXRyaWMiPjxkaXYgY2xhc3M9Im1ldHJpYy1sYWJlbCI+VG90YWwgcmVnaXN0cm9zPC9kaXY+PGRpdiBjbGFzcz0ibWV0cmljLXZhbCIgaWQ9Im0tdG90YWwiPuKAlDwvZGl2PjxkaXYgY2xhc3M9Im1ldHJpYy1kZWx0YSBuZXV0cmFsIiBpZD0iZC10b3RhbCI+PC9kaXY+PC9kaXY+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9Im1ldHJpYyI+PGRpdiBjbGFzcz0ibWV0cmljLWxhYmVsIj5BY2NlcHRlZDwvZGl2PjxkaXYgY2xhc3M9Im1ldHJpYy12YWwgZ3JlZW4iIGlkPSJtLWFjY2VwdGVkIj7igJQ8L2Rpdj48ZGl2IGNsYXNzPSJtZXRyaWMtZGVsdGEgbmV1dHJhbCIgaWQ9ImQtYWNjZXB0ZWQiPjwvZGl2PjwvZGl2PgogICAgICAgICAgICA8ZGl2IGNsYXNzPSJtZXRyaWMiPjxkaXYgY2xhc3M9Im1ldHJpYy1sYWJlbCI+RGlzY2FyZGVkPC9kaXY+PGRpdiBjbGFzcz0ibWV0cmljLXZhbCByZWQiIGlkPSJtLWRpc2NhcmRlZCI+4oCUPC9kaXY+PGRpdiBjbGFzcz0ibWV0cmljLWRlbHRhIG5ldXRyYWwiIGlkPSJkLWRpc2NhcmRlZCI+PC9kaXY+PC9kaXY+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9Im1ldHJpYyI+PGRpdiBjbGFzcz0ibWV0cmljLWxhYmVsIj5CbG9ja2VkPC9kaXY+PGRpdiBjbGFzcz0ibWV0cmljLXZhbCBhbWJlciIgaWQ9Im0tYmxvY2tlZCI+4oCUPC9kaXY+PGRpdiBjbGFzcz0ibWV0cmljLWRlbHRhIG5ldXRyYWwiIGlkPSJkLWJsb2NrZWQiPjwvZGl2PjwvZGl2PgogICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJtZXRyaWMtZ3JpZCI+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9Im1ldHJpYyI+PGRpdiBjbGFzcz0ibWV0cmljLWxhYmVsIj5JbiBQcm9ncmVzczwvZGl2PjxkaXYgY2xhc3M9Im1ldHJpYy12YWwgYW1iZXIiIGlkPSJtLWlucHJvZ3Jlc3MiPuKAlDwvZGl2PjxkaXYgY2xhc3M9Im1ldHJpYy1kZWx0YSBuZXV0cmFsIiBpZD0iZC1pbnByb2dyZXNzIj48L2Rpdj48L2Rpdj4KICAgICAgICAgICAgPGRpdiBjbGFzcz0ibWV0cmljIj48ZGl2IGNsYXNzPSJtZXRyaWMtbGFiZWwiPlJlYWR5IFRvIFZlcmlmeTwvZGl2PjxkaXYgY2xhc3M9Im1ldHJpYy12YWwgcHVycGxlIiBpZD0ibS1ydHYiPuKAlDwvZGl2PjxkaXYgY2xhc3M9Im1ldHJpYy1kZWx0YSBuZXV0cmFsIiBpZD0iZC1ydHYiPjwvZGl2PjwvZGl2PgogICAgICAgICAgICA8ZGl2IGNsYXNzPSJtZXRyaWMiPjxkaXYgY2xhc3M9Im1ldHJpYy1sYWJlbCI+QW5hbHlzaW5nPC9kaXY+PGRpdiBjbGFzcz0ibWV0cmljLXZhbCBwdXJwbGUiIGlkPSJtLWFuYWx5c2luZyI+4oCUPC9kaXY+PGRpdiBjbGFzcz0ibWV0cmljLWRlbHRhIG5ldXRyYWwiIGlkPSJkLWFuYWx5c2luZyI+PC9kaXY+PC9kaXY+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9Im1ldHJpYyI+PGRpdiBjbGFzcz0ibWV0cmljLWxhYmVsIj5UbyBSZXdvcmsgLyBUZXN0PC9kaXY+PGRpdiBjbGFzcz0ibWV0cmljLXZhbCIgaWQ9Im0tb3RoZXIiPuKAlDwvZGl2PjxkaXYgY2xhc3M9Im1ldHJpYy1kZWx0YSBuZXV0cmFsIiBpZD0iZC1vdGhlciI+PC9kaXY+PC9kaXY+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPCEtLSBFcXVpcG8gLS0+CiAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbiIgaWQ9InNlYy1lcXVpcG8iPgogICAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbi1oZWFkZXIiPjxzcGFuIGNsYXNzPSJzZWN0aW9uLXRpdGxlIj5EaXN0cmlidWNpw7NuIHBvciBlcXVpcG88L3NwYW4+PHNwYW4gY2xhc3M9InNlY3Rpb24tY291bnQiIGlkPSJlcS10b3RhbC1iYWRnZSI+4oCUPC9zcGFuPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0idGVhbS1jYXJkcyI+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InRlYW0tY2FyZCIgc3R5bGU9ImJvcmRlci1sZWZ0OjNweCBzb2xpZCAjMTg1RkE1Ij48ZGl2IGNsYXNzPSJ0ZWFtLWxhYmVsIj5FcXVpcG8gbG9jYWw8L2Rpdj48ZGl2IGNsYXNzPSJ0ZWFtLXZhbCIgc3R5bGU9ImNvbG9yOiMxODVGQTUiIGlkPSJ0LWxvY2FsIj7igJQ8L2Rpdj48ZGl2IGNsYXNzPSJ0ZWFtLWxhYmVsIiBpZD0idC1sb2NhbC1wY3QiPuKAlDwvZGl2PjwvZGl2PgogICAgICAgICAgICA8ZGl2IGNsYXNzPSJ0ZWFtLWNhcmQiIHN0eWxlPSJib3JkZXItbGVmdDozcHggc29saWQgIzFEOUU3NSI+PGRpdiBjbGFzcz0idGVhbS1sYWJlbCI+RXF1aXBvIGdsb2JhbDwvZGl2PjxkaXYgY2xhc3M9InRlYW0tdmFsIiBzdHlsZT0iY29sb3I6IzFEOUU3NSIgaWQ9InQtZ2xvYmFsIj7igJQ8L2Rpdj48ZGl2IGNsYXNzPSJ0ZWFtLWxhYmVsIiBpZD0idC1nbG9iYWwtcGN0Ij7igJQ8L2Rpdj48L2Rpdj4KICAgICAgICAgIDwvZGl2PgogICAgICAgICAgPGRpdiBzdHlsZT0iYmFja2dyb3VuZDojZmZmO2JvcmRlcjowLjVweCBzb2xpZCAjZThlOGU0O2JvcmRlci1yYWRpdXM6OHB4O3BhZGRpbmc6MTJweCI+CiAgICAgICAgICAgIDxkaXYgc3R5bGU9ImRpc3BsYXk6ZmxleDtqdXN0aWZ5LWNvbnRlbnQ6c3BhY2UtYmV0d2VlbjttYXJnaW4tYm90dG9tOjZweDtmb250LXNpemU6MTFweCI+CiAgICAgICAgICAgICAgPHNwYW4gc3R5bGU9ImNvbG9yOiMxODVGQTU7Zm9udC13ZWlnaHQ6NTAwIiBpZD0iYmFyLWxvY2FsLWxhYmVsIj5Mb2NhbCDigJQlPC9zcGFuPgogICAgICAgICAgICAgIDxzcGFuIHN0eWxlPSJjb2xvcjojMUQ5RTc1O2ZvbnQtd2VpZ2h0OjUwMCIgaWQ9ImJhci1nbG9iYWwtbGFiZWwiPkdsb2JhbCDigJQlPC9zcGFuPgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgPGRpdiBzdHlsZT0iZGlzcGxheTpmbGV4O2hlaWdodDoxMHB4O2JvcmRlci1yYWRpdXM6NXB4O292ZXJmbG93OmhpZGRlbjtiYWNrZ3JvdW5kOiNlOGU4ZTQiPgogICAgICAgICAgICAgIDxkaXYgaWQ9ImJhci1sb2NhbCIgc3R5bGU9ImJhY2tncm91bmQ6IzE4NUZBNTt3aWR0aDowJTt0cmFuc2l0aW9uOndpZHRoIDAuNnMgZWFzZSI+PC9kaXY+CiAgICAgICAgICAgICAgPGRpdiBpZD0iYmFyLWdsb2JhbCIgc3R5bGU9ImJhY2tncm91bmQ6IzFEOUU3NTt3aWR0aDowJTt0cmFuc2l0aW9uOndpZHRoIDAuNnMgZWFzZSI+PC9kaXY+CiAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8ZGl2IHN0eWxlPSJkaXNwbGF5OmZsZXg7anVzdGlmeS1jb250ZW50OnNwYWNlLWJldHdlZW47bWFyZ2luLXRvcDo2cHg7Zm9udC1zaXplOjExcHg7Y29sb3I6Izg4OCI+CiAgICAgICAgICAgICAgPHNwYW4gaWQ9ImJhci1sb2NhbC1uIj7igJQ8L3NwYW4+PHNwYW4gaWQ9ImJhci1nbG9iYWwtbiI+4oCUPC9zcGFuPgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDwvZGl2PgogICAgICAgIDwvZGl2PgoKICAgICAgICA8IS0tIEVzdGF0dXMgZ2VuZXJhbCAtLT4KICAgICAgICA8ZGl2IGNsYXNzPSJzZWN0aW9uIiBpZD0ic2VjLWVnIj4KICAgICAgICAgIDxkaXYgY2xhc3M9InNlY3Rpb24taGVhZGVyIj48c3BhbiBjbGFzcz0ic2VjdGlvbi10aXRsZSI+RXN0YXR1cyBnZW5lcmFsPC9zcGFuPjxzcGFuIGNsYXNzPSJzZWN0aW9uLWNvdW50IiBpZD0iYzFiLWNvdW50Ij7igJQ8L3NwYW4+PC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJsZWdlbmQiPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibHNxIiBzdHlsZT0iYmFja2dyb3VuZDpyZ2JhKDI0LDk1LDE2NSwwLjMpIj48L3NwYW4+UTE8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsc3EiIHN0eWxlPSJiYWNrZ3JvdW5kOnJnYmEoMjksMTU4LDExNywwLjMpIj48L3NwYW4+UTI8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBzb2xpZCAjNjM5OTIyIj48L3NwYW4+QWNjZXB0ZWQ8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBkYXNoZWQgI0UyNEI0QSI+PC9zcGFuPkRpc2NhcmRlZDwvc3Bhbj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxsbiIgc3R5bGU9ImJvcmRlci10b3A6MnB4IGRhc2hlZCAjRUY5RjI3Ij48L3NwYW4+SW4gUHJvZ3Jlc3M8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBkb3R0ZWQgIzdGNzdERCI+PC9zcGFuPkJsb2NrZWQ8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBkb3R0ZWQgIzE4NUZBNSI+PC9zcGFuPlJlYWR5IFRvIFZlcmlmeTwvc3Bhbj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxsbiIgc3R5bGU9ImJvcmRlci10b3A6MnB4IGRvdHRlZCAjMUQ5RTc1Ij48L3NwYW4+QW5hbHlzaW5nPC9zcGFuPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJjaGFydC13cmFwIiBzdHlsZT0iaGVpZ2h0OjI2MHB4Ij48Y2FudmFzIGlkPSJjMWIiPjwvY2FudmFzPjwvZGl2PgogICAgICAgIDwvZGl2PgoKICAgICAgICA8IS0tIEdBUCBHZW5lcmFsIC0tPgogICAgICAgIDxkaXYgY2xhc3M9InNlY3Rpb24iIGlkPSJzZWMtZ2FwLWdlbmVyYWwiPgogICAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbi1oZWFkZXIiPjxzcGFuIGNsYXNzPSJzZWN0aW9uLXRpdGxlIj5HQVAgR2VuZXJhbDwvc3Bhbj48c3BhbiBjbGFzcz0ic2VjdGlvbi1jb3VudCIgaWQ9ImNnYXAtZ2VuZXJhbC1jb3VudCI+4oCUPC9zcGFuPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0ibGVnZW5kIj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxzcSIgc3R5bGU9ImJhY2tncm91bmQ6cmdiYSgyNCw5NSwxNjUsMC4yNSk7Ym9yZGVyOjFweCBzb2xpZCByZ2JhKDI0LDk1LDE2NSwwLjUpIj48L3NwYW4+VG90YWwgcG9yIHNwcmludDwvc3Bhbj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxsbiIgc3R5bGU9ImJvcmRlci10b3A6MnB4IHNvbGlkICM2Mzk5MjIiPjwvc3Bhbj5UYXJlYXMgZW50cmVnYWRhczwvc3Bhbj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxsbiIgc3R5bGU9ImJvcmRlci10b3A6MnB4IGRhc2hlZCAjYWFhIj48L3NwYW4+VGVuZGVuY2lhPC9zcGFuPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJwY3Qtcm93IiBpZD0icGN0LWdlbmVyYWwiPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0iY2hhcnQtd3JhcCIgc3R5bGU9ImhlaWdodDoyNzBweCI+PGNhbnZhcyBpZD0iY2dhcF9nZW5lcmFsIj48L2NhbnZhcz48L2Rpdj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPCEtLSBFc3RhdHVzIHBvciBzcHJpbnQgLS0+CiAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbiIgaWQ9InNlYy1lcHMiPgogICAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbi1oZWFkZXIiPjxzcGFuIGNsYXNzPSJzZWN0aW9uLXRpdGxlIj5Fc3RhdHVzIGdlbmVyYWwgcG9yIHNwcmludDwvc3Bhbj48c3BhbiBjbGFzcz0ic2VjdGlvbi1jb3VudCIgaWQ9ImMxLWNvdW50Ij7igJQ8L3NwYW4+PC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJsZWdlbmQiPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibHNxIiBzdHlsZT0iYmFja2dyb3VuZDpyZ2JhKDI0LDk1LDE2NSwwLjMpIj48L3NwYW4+UTE8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsc3EiIHN0eWxlPSJiYWNrZ3JvdW5kOnJnYmEoMjksMTU4LDExNywwLjMpIj48L3NwYW4+UTI8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBzb2xpZCAjNjM5OTIyIj48L3NwYW4+QWNjZXB0ZWQ8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBkYXNoZWQgI0UyNEI0QSI+PC9zcGFuPkRpc2NhcmRlZDwvc3Bhbj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxsbiIgc3R5bGU9ImJvcmRlci10b3A6MnB4IGRhc2hlZCAjRUY5RjI3Ij48L3NwYW4+SW4gUHJvZ3Jlc3M8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBkb3R0ZWQgIzdGNzdERCI+PC9zcGFuPkJsb2NrZWQ8L3NwYW4+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9ImNoYXJ0LXdyYXAiIHN0eWxlPSJoZWlnaHQ6MjYwcHgiPjxjYW52YXMgaWQ9ImMxIj48L2NhbnZhcz48L2Rpdj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPCEtLSBHQVAgcG9yIHNwcmludCAtLT4KICAgICAgICA8ZGl2IGNsYXNzPSJzZWN0aW9uIiBpZD0ic2VjLWdhcC1zcHJpbnQiPgogICAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbi1oZWFkZXIiPjxzcGFuIGNsYXNzPSJzZWN0aW9uLXRpdGxlIj5HQVAgcG9yIHNwcmludDwvc3Bhbj48c3BhbiBjbGFzcz0ic2VjdGlvbi1jb3VudCIgaWQ9ImNnYXAtc3ByaW50LWNvdW50Ij7igJQ8L3NwYW4+PC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJsZWdlbmQiPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibHNxIiBzdHlsZT0iYmFja2dyb3VuZDpyZ2JhKDI0LDk1LDE2NSwwLjI1KTtib3JkZXI6MXB4IHNvbGlkIHJnYmEoMjQsOTUsMTY1LDAuNSkiPjwvc3Bhbj5Ub3RhbCBwb3Igc3ByaW50PC9zcGFuPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibGxuIiBzdHlsZT0iYm9yZGVyLXRvcDoycHggc29saWQgIzYzOTkyMiI+PC9zcGFuPlRhcmVhcyBlbnRyZWdhZGFzPC9zcGFuPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibGxuIiBzdHlsZT0iYm9yZGVyLXRvcDoycHggZGFzaGVkICNhYWEiPjwvc3Bhbj5UZW5kZW5jaWE8L3NwYW4+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9InBjdC1yb3ciIGlkPSJwY3Qtc3ByaW50Ij48L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9ImNoYXJ0LXdyYXAiIHN0eWxlPSJoZWlnaHQ6MjcwcHgiPjxjYW52YXMgaWQ9ImNnYXBfc3ByaW50Ij48L2NhbnZhcz48L2Rpdj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPCEtLSBBbsOhbGlzaXMgLS0+CiAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbiIgaWQ9InNlYy1hbmFsaXNpcyI+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJzZWN0aW9uLWhlYWRlciI+PHNwYW4gY2xhc3M9InNlY3Rpb24tdGl0bGUiPkFuw6FsaXNpczwvc3Bhbj48c3BhbiBjbGFzcz0ic2VjdGlvbi1jb3VudCIgaWQ9ImMyLWNvdW50Ij7igJQ8L3NwYW4+PC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJsZWdlbmQiPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibHNxIiBzdHlsZT0iYmFja2dyb3VuZDpyZ2JhKDI0LDk1LDE2NSwwLjMpIj48L3NwYW4+UTE8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsc3EiIHN0eWxlPSJiYWNrZ3JvdW5kOnJnYmEoMjksMTU4LDExNywwLjMpIj48L3NwYW4+UTI8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBzb2xpZCAjNjM5OTIyIj48L3NwYW4+QWNjZXB0ZWQ8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBkYXNoZWQgI0UyNEI0QSI+PC9zcGFuPkRpc2NhcmRlZDwvc3Bhbj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxsbiIgc3R5bGU9ImJvcmRlci10b3A6MnB4IGRhc2hlZCAjMTg1RkE1Ij48L3NwYW4+UmVhZHkgVG8gVmVyaWZ5PC9zcGFuPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibGxuIiBzdHlsZT0iYm9yZGVyLXRvcDoycHggZGFzaGVkICNFRjlGMjciPjwvc3Bhbj5JbiBQcm9ncmVzczwvc3Bhbj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxsbiIgc3R5bGU9ImJvcmRlci10b3A6MnB4IGRvdHRlZCAjN0Y3N0REIj48L3NwYW4+QW5hbHlzaW5nPC9zcGFuPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJjaGFydC13cmFwIiBzdHlsZT0iaGVpZ2h0OjI2MHB4Ij48Y2FudmFzIGlkPSJjMiI+PC9jYW52YXM+PC9kaXY+CiAgICAgICAgPC9kaXY+CgogICAgICAgIDwhLS0gVmFsaWRhY2nDs24gLS0+CiAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbiIgaWQ9InNlYy12YWxpZGFjaW9uIj4KICAgICAgICAgIDxkaXYgY2xhc3M9InNlY3Rpb24taGVhZGVyIj48c3BhbiBjbGFzcz0ic2VjdGlvbi10aXRsZSI+VmFsaWRhY2nDs248L3NwYW4+PHNwYW4gY2xhc3M9InNlY3Rpb24tY291bnQiIGlkPSJjMy1jb3VudCI+4oCUPC9zcGFuPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0ibGVnZW5kIj4KICAgICAgICAgICAgPHNwYW4+PHNwYW4gY2xhc3M9ImxzcSIgc3R5bGU9ImJhY2tncm91bmQ6cmdiYSgyNCw5NSwxNjUsMC4zKSI+PC9zcGFuPlExPC9zcGFuPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibHNxIiBzdHlsZT0iYmFja2dyb3VuZDpyZ2JhKDI5LDE1OCwxMTcsMC4zKSI+PC9zcGFuPlEyPC9zcGFuPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibGxuIiBzdHlsZT0iYm9yZGVyLXRvcDoycHggc29saWQgIzYzOTkyMiI+PC9zcGFuPkFjY2VwdGVkPC9zcGFuPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibGxuIiBzdHlsZT0iYm9yZGVyLXRvcDoycHggZGFzaGVkICNFMjRCNEEiPjwvc3Bhbj5EaXNjYXJkZWQ8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuPjxzcGFuIGNsYXNzPSJsbG4iIHN0eWxlPSJib3JkZXItdG9wOjJweCBkYXNoZWQgI0VGOUYyNyI+PC9zcGFuPkluIFByb2dyZXNzPC9zcGFuPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibGxuIiBzdHlsZT0iYm9yZGVyLXRvcDoycHggZG90dGVkICM3Rjc3REQiPjwvc3Bhbj5CbG9ja2VkPC9zcGFuPgogICAgICAgICAgICA8c3Bhbj48c3BhbiBjbGFzcz0ibGxuIiBzdHlsZT0iYm9yZGVyLXRvcDoycHggZG90dGVkICMxODVGQTUiPjwvc3Bhbj5BbmFseXNpbmc8L3NwYW4+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9ImNoYXJ0LXdyYXAiIHN0eWxlPSJoZWlnaHQ6MjYwcHgiPjxjYW52YXMgaWQ9ImMzIj48L2NhbnZhcz48L2Rpdj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPCEtLSBFcXVpcG8gbG9jYWwgLS0+CiAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbiIgaWQ9InNlYy1sb2NhbCI+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJzZWN0aW9uLWhlYWRlciI+PHNwYW4gY2xhc3M9InNlY3Rpb24tdGl0bGUiPkVxdWlwbyBsb2NhbCDigJQgZXN0YWRvIHBvciBzcHJpbnQ8L3NwYW4+PHNwYW4gY2xhc3M9InNlY3Rpb24tY291bnQiIGlkPSJlcS1iYWRnZSI+4oCUPC9zcGFuPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0iZmlsdGVyLXJvdyIgaWQ9ImVxLWZpbHRlcnMiPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0ibGVnZW5kIiBpZD0iZXEtbGVnZW5kIj48L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9ImNoYXJ0LXdyYXAiIHN0eWxlPSJoZWlnaHQ6MjgwcHgiPjxjYW52YXMgaWQ9ImM0Ij48L2NhbnZhcz48L2Rpdj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPCEtLSBSZXRyYXNvIGFuw6FsaXNpcyAtLT4KICAgICAgICA8ZGl2IGNsYXNzPSJzZWN0aW9uIiBpZD0ic2VjLWRlbGF5LWEiPgogICAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbi1oZWFkZXIiPjxzcGFuIGNsYXNzPSJzZWN0aW9uLXRpdGxlIj5SZXRyYXNvIGVuIHRhcmVhcyBkZSBhbsOhbGlzaXM8L3NwYW4+PHNwYW4gY2xhc3M9InNlY3Rpb24tY291bnQiIGlkPSJjYS1jb3VudCI+4oCUPC9zcGFuPjwvZGl2PgogICAgICAgICAgPHAgY2xhc3M9ImNoYXJ0LXN1YiI+TsO6bWVybyBkZSBzcHJpbnRzIGRlIHJldHJhc28gKGhvbWV3b3JrIGRlbGF5KTwvcD4KICAgICAgICAgIDxkaXYgY2xhc3M9ImNoYXJ0LXdyYXAiIHN0eWxlPSJoZWlnaHQ6MjQwcHgiPjxjYW52YXMgaWQ9ImNhIj48L2NhbnZhcz48L2Rpdj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPCEtLSBSZXRyYXNvIHZhbGlkYWNpw7NuIC0tPgogICAgICAgIDxkaXYgY2xhc3M9InNlY3Rpb24iIGlkPSJzZWMtZGVsYXktdiI+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJzZWN0aW9uLWhlYWRlciI+PHNwYW4gY2xhc3M9InNlY3Rpb24tdGl0bGUiPlJldHJhc28gZW4gdGFyZWFzIGRlIHZhbGlkYWNpw7NuPC9zcGFuPjxzcGFuIGNsYXNzPSJzZWN0aW9uLWNvdW50IiBpZD0iY3YtY291bnQiPuKAlDwvc3Bhbj48L2Rpdj4KICAgICAgICAgIDxwIGNsYXNzPSJjaGFydC1zdWIiPk7Dum1lcm8gZGUgc3ByaW50cyBkZSByZXRyYXNvIChob21ld29yayBkZWxheSk8L3A+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJjaGFydC13cmFwIiBzdHlsZT0iaGVpZ2h0OjI0MHB4Ij48Y2FudmFzIGlkPSJjdiI+PC9jYW52YXM+PC9kaXY+CiAgICAgICAgPC9kaXY+CgogICAgICA8L2Rpdj4KICAgIDwvZGl2PgogIDwvZGl2Pgo8L2Rpdj4KCjxmb290ZXI+RGFzaGJvYXJkIGRlIHNwcmludHMgwrcgZGF0b3MgcHJvY2VzYWRvcyBsb2NhbG1lbnRlIGVuIHR1IG5hdmVnYWRvciDCtyBudW5jYSBzZSBlbnbDrWFuIGEgbmluZ8O6biBzZXJ2aWRvcjwvZm9vdGVyPgoKPHNjcmlwdD4KQ2hhcnQucmVnaXN0ZXIoQ2hhcnREYXRhTGFiZWxzKTsKCmNvbnN0IFNQUklOVF9PUkRFUj1bJ1ExLVMxJywnUTEtUzInLCdRMS1TMycsJ1ExLVM0JywnUTEtUzUnLCdRMS1TNicsJ1EyLVMxJywnUTItUzInLCdRMi1TMycsJ1EyLVM0JywnUTItUzUnLCdRMi1TNicsJ1ExIFNwcmludCAxJywnUTEgU3ByaW50IDInLCdRMSBTcHJpbnQgMycsJ1ExIFNwcmludCA0JywnUTEgU3ByaW50IDUnLCdRMSBTcHJpbnQgNicsJ1EyIFNwcmludCAxJywnUTIgU3ByaW50IDInLCdRMiBTcHJpbnQgMycsJ1EyIFNwcmludCA0JywnUTIgU3ByaW50IDUnLCdRMiBTcHJpbnQgNitTdCcsJ1EzIFNwcmludCAxJywnUTMgU3ByaW50IDInXTsKZnVuY3Rpb24gbm9ybVNwcmludChzKXtyZXR1cm4gcy5yZXBsYWNlKC9ccysvZywnICcpLnRyaW0oKTt9CmZ1bmN0aW9uIHNwcmludExhYmVsKHMpe3JldHVybiBzLnJlcGxhY2UoJ1NwcmludCAnLCdTJykucmVwbGFjZSgnLVMnLCcgUycpO30KY29uc3QgQ09MT1JTPXsnQWNjZXB0ZWQnOicjNjM5OTIyJywnRGlzY2FyZGVkJzonI0UyNEI0QScsJ0luIFByb2dyZXNzJzonI0VGOUYyNycsJ0Jsb2NrZWQnOicjN0Y3N0REJywnUmVhZHkgVG8gVmVyaWZ5JzonIzE4NUZBNScsJ0FuYWx5c2luZyc6JyMxRDlFNzUnLCdUbyBSZXdvcmsnOicjRDg1QTMwJywnVGVzdCc6JyM4ODgnfTsKY29uc3QgUEVSU09OX0NPTE9SUz1bJyMxODVGQTUnLCcjMUQ5RTc1JywnI0VGOUYyNycsJyM3Rjc3REQnLCcjRDg1QTMwJywnIzYzOTkyMiddOwoKbGV0IGNoYXJ0cz17fSwgcHJldkRhdGE9bnVsbCwgZXFEYXRhPXt9LCBlcVNwcmludHM9W10sIGN1cnJlbnRQZXJzb25hPSdhbGwnOwoKZnVuY3Rpb24gc2Nyb2xsVG8oaWQpewogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKGlkKS5zY3JvbGxJbnRvVmlldyh7YmVoYXZpb3I6J3Ntb290aCd9KTsKICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcubmF2LWl0ZW0nKS5mb3JFYWNoKGI9PmIuY2xhc3NMaXN0LnJlbW92ZSgnYWN0aXZlJykpOwogIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJy5uYXYtaXRlbScpLmZvckVhY2goYj0+e2lmKGIuZ2V0QXR0cmlidXRlKCdvbmNsaWNrJykmJmIuZ2V0QXR0cmlidXRlKCdvbmNsaWNrJykuaW5jbHVkZXMoaWQpKWIuY2xhc3NMaXN0LmFkZCgnYWN0aXZlJyk7fSk7Cn0KCi8vIEludGVyc2VjdGlvbiBvYnNlcnZlciBwYXJhIG5hdiBhY3Rpdm8KZnVuY3Rpb24gc2V0dXBOYXZPYnNlcnZlcigpewogIGNvbnN0IHNlY3Rpb25zPVsnc2VjLW1ldHJpY2FzJywnc2VjLWVxdWlwbycsJ3NlYy1lZycsJ3NlYy1nYXAtZ2VuZXJhbCcsJ3NlYy1lcHMnLCdzZWMtZ2FwLXNwcmludCcsJ3NlYy1hbmFsaXNpcycsJ3NlYy12YWxpZGFjaW9uJywnc2VjLWxvY2FsJywnc2VjLWRlbGF5LWEnLCdzZWMtZGVsYXktdiddOwogIGNvbnN0IG9icz1uZXcgSW50ZXJzZWN0aW9uT2JzZXJ2ZXIoZW50cmllcz0+ewogICAgZW50cmllcy5mb3JFYWNoKGU9PnsKICAgICAgaWYoZS5pc0ludGVyc2VjdGluZyl7CiAgICAgICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgnLm5hdi1pdGVtJykuZm9yRWFjaChiPT5iLmNsYXNzTGlzdC5yZW1vdmUoJ2FjdGl2ZScpKTsKICAgICAgICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcubmF2LWl0ZW0nKS5mb3JFYWNoKGI9PntpZihiLmdldEF0dHJpYnV0ZSgnb25jbGljaycpJiZiLmdldEF0dHJpYnV0ZSgnb25jbGljaycpLmluY2x1ZGVzKGUudGFyZ2V0LmlkKSliLmNsYXNzTGlzdC5hZGQoJ2FjdGl2ZScpO30pOwogICAgICB9CiAgICB9KTsKICB9LHtyb290TWFyZ2luOictMzAlIDBweCAtNjAlIDBweCd9KTsKICBzZWN0aW9ucy5mb3JFYWNoKGlkPT57Y29uc3QgZWw9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoaWQpO2lmKGVsKW9icy5vYnNlcnZlKGVsKTt9KTsKfQoKZnVuY3Rpb24gc3ByaW50S2V5KHMpe2NvbnN0IG09cy5tYXRjaCgvUShcZCspLVMoXGQrKS8pO3JldHVybiBtP3BhcnNlSW50KG1bMV0pKjEwMCtwYXJzZUludChtWzJdKTo5OTk5O30KZnVuY3Rpb24gZGVzdHJveUNoYXJ0KGlkKXtpZihjaGFydHNbaWRdKXtjaGFydHNbaWRdLmRlc3Ryb3koKTtkZWxldGUgY2hhcnRzW2lkXTt9fQoKY29uc3QgcTFjPSdyZ2JhKDI0LDk1LDE2NSwwLjIpJyxxMmM9J3JnYmEoMjksMTU4LDExNywwLjIpJyxxMWI9J3JnYmEoMjQsOTUsMTY1LDAuNDUpJyxxMmI9J3JnYmEoMjksMTU4LDExNywwLjQ1KSc7CmZ1bmN0aW9uIHNwcmludEJnKGxhYmVscyl7cmV0dXJuIGxhYmVscy5tYXAobD0+bC5zdGFydHNXaXRoKCdRMScpP3ExYzpxMmMpO30KZnVuY3Rpb24gc3ByaW50QmQobGFiZWxzKXtyZXR1cm4gbGFiZWxzLm1hcChsPT5sLnN0YXJ0c1dpdGgoJ1ExJyk/cTFiOnEyYik7fQoKZnVuY3Rpb24gYmFyRHMobGFiZWxzLGRhdGEpe3JldHVybnt0eXBlOidiYXInLGxhYmVsOidUb3RhbCcsZGF0YSxiYWNrZ3JvdW5kQ29sb3I6c3ByaW50QmcobGFiZWxzKSxib3JkZXJDb2xvcjpzcHJpbnRCZChsYWJlbHMpLGJvcmRlcldpZHRoOjEsYm9yZGVyUmFkaXVzOjQsYm9yZGVyU2tpcHBlZDpmYWxzZSx5QXhpc0lEOid5JyxvcmRlcjoxLGRhdGFsYWJlbHM6e2FuY2hvcjonZW5kJyxhbGlnbjonZW5kJyxjb2xvcjoncmdiYSgxMDAsMTAwLDEwMCwwLjgpJyxmb250OntzaXplOjEwLHdlaWdodDonNTAwJ30sZm9ybWF0dGVyOnY9PnZ8fCcnfX07fQpmdW5jdGlvbiBsaW5lRHMobGFiZWwsZGF0YSxjb2xvcixkYXNoPVtdKXtyZXR1cm57dHlwZTonbGluZScsbGFiZWwsZGF0YSxib3JkZXJDb2xvcjpjb2xvcixiYWNrZ3JvdW5kQ29sb3I6Y29sb3IsYm9yZGVyV2lkdGg6Mixwb2ludFJhZGl1czpjdHg9PmRhdGFbY3R4LmRhdGFJbmRleF0+MD8zOjAscG9pbnRIb3ZlclJhZGl1czo2LGJvcmRlckRhc2g6ZGFzaCx0ZW5zaW9uOjAuMyx5QXhpc0lEOid5JyxvcmRlcjowLHNwYW5HYXBzOmZhbHNlLHNlZ21lbnQ6e2JvcmRlckNvbG9yOmN0eD0+KGRhdGFbY3R4LnAwRGF0YUluZGV4XT09PTB8fGRhdGFbY3R4LnAxRGF0YUluZGV4XT09PTApPyd0cmFuc3BhcmVudCc6Y29sb3J9LGRhdGFsYWJlbHM6e2Rpc3BsYXk6Y3R4PT5kYXRhW2N0eC5kYXRhSW5kZXhdPjAsYWxpZ246J3RvcCcsYW5jaG9yOid0b3AnLGNvbG9yLGZvbnQ6e3NpemU6MTAsd2VpZ2h0Oic1MDAnfSxmb3JtYXR0ZXI6dj0+dn19O30KY29uc3Qgb3B0cz1zdGVwPT4oe3Jlc3BvbnNpdmU6dHJ1ZSxtYWludGFpbkFzcGVjdFJhdGlvOmZhbHNlLGxheW91dDp7cGFkZGluZzp7dG9wOjIwfX0scGx1Z2luczp7bGVnZW5kOntkaXNwbGF5OmZhbHNlfSxkYXRhbGFiZWxzOnt9LHRvb2x0aXA6e2NhbGxiYWNrczp7Zm9vdGVyOml0ZW1zPT4nVG90YWw6ICcraXRlbXMucmVkdWNlKChzLGkpPT5zK2kucGFyc2VkLnksMCl9fX0sc2NhbGVzOnt4Ont0aWNrczp7YXV0b1NraXA6ZmFsc2UsbWF4Um90YXRpb246MzUsZm9udDp7c2l6ZToxMH19LGdyaWQ6e2Rpc3BsYXk6ZmFsc2V9fSx5OntiZWdpbkF0WmVybzp0cnVlLHRpY2tzOntzdGVwU2l6ZTpzdGVwLGZvbnQ6e3NpemU6MTF9fSxncmlkOntjb2xvcjoncmdiYSgwLDAsMCwwLjA2KSd9fX19KTsKCi8vIEzDrW5lYSBkZSB0ZW5kZW5jaWEgbGluZWFsCmZ1bmN0aW9uIHRyZW5kTGluZShkYXRhKXsKICBjb25zdCBuPWRhdGEubGVuZ3RoLCB2YWxpZFB0cz1kYXRhLm1hcCgodixpKT0+KHt4OmkseTp2fSkpLmZpbHRlcihwPT5wLnk+MCk7CiAgaWYodmFsaWRQdHMubGVuZ3RoPDIpcmV0dXJuIEFycmF5KG4pLmZpbGwobnVsbCk7CiAgY29uc3Qgc3VtWD12YWxpZFB0cy5yZWR1Y2UoKHMscCk9PnMrcC54LDApLCBzdW1ZPXZhbGlkUHRzLnJlZHVjZSgocyxwKT0+cytwLnksMCk7CiAgY29uc3Qgc3VtWFk9dmFsaWRQdHMucmVkdWNlKChzLHApPT5zK3AueCpwLnksMCksIHN1bVgyPXZhbGlkUHRzLnJlZHVjZSgocyxwKT0+cytwLngqcC54LDApOwogIGNvbnN0IG52PXZhbGlkUHRzLmxlbmd0aCwgbT0obnYqc3VtWFktc3VtWCpzdW1ZKS8obnYqc3VtWDItc3VtWCpzdW1YKSwgYj0oc3VtWS1tKnN1bVgpL252OwogIHJldHVybiBBcnJheS5mcm9tKHtsZW5ndGg6bn0sKF8saSk9Pk1hdGgubWF4KDAsTWF0aC5yb3VuZChtKmkrYikpKTsKfQoKZnVuY3Rpb24gYnVpbGRHYXAoY2FudmFzSWQsbGVnZW5kSWQsY291bnRJZCxzcHJpbnRzLHRvdGFsZXMsZW50cmVnYWRhcyl7CiAgY29uc3QgcGN0cz10b3RhbGVzLm1hcCgodCxpKT0+dD4wP01hdGgucm91bmQoZW50cmVnYWRhc1tpXS90KjEwMCk6MCk7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoY291bnRJZCkudGV4dENvbnRlbnQ9dG90YWxlcy5yZWR1Y2UoKGEsYik9PmErYiwwKSsnIHJlZ2lzdHJvcyc7CiAgY29uc3QgdHJlbmQ9dHJlbmRMaW5lKGVudHJlZ2FkYXMpOwogIGRlc3Ryb3lDaGFydChjYW52YXNJZCk7CiAgY2hhcnRzW2NhbnZhc0lkXT1uZXcgQ2hhcnQoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoY2FudmFzSWQpLHsKICAgIGRhdGE6e2xhYmVsczpzcHJpbnRzLGRhdGFzZXRzOlsKICAgICAgYmFyRHMoc3ByaW50cyx0b3RhbGVzKSwKICAgICAgbGluZURzKCdUYXJlYXMgZW50cmVnYWRhcycsZW50cmVnYWRhcywnIzYzOTkyMicpLAogICAgICB7dHlwZTonbGluZScsbGFiZWw6J1RlbmRlbmNpYScsZGF0YTp0cmVuZCxib3JkZXJDb2xvcjoncmdiYSgxMDAsMTAwLDEwMCwwLjQpJyxiYWNrZ3JvdW5kQ29sb3I6J3RyYW5zcGFyZW50Jyxib3JkZXJXaWR0aDoxLjUsYm9yZGVyRGFzaDpbNSw0XSxwb2ludFJhZGl1czowLHRlbnNpb246MCx5QXhpc0lEOid5JyxvcmRlcjowLGRhdGFsYWJlbHM6e2Rpc3BsYXk6ZmFsc2V9fSwKICAgIF19LAogICAgb3B0aW9uczp7cmVzcG9uc2l2ZTp0cnVlLG1haW50YWluQXNwZWN0UmF0aW86ZmFsc2UsbGF5b3V0OntwYWRkaW5nOnt0b3A6MjR9fSxwbHVnaW5zOntsZWdlbmQ6e2Rpc3BsYXk6ZmFsc2V9LGRhdGFsYWJlbHM6e30sdG9vbHRpcDp7Y2FsbGJhY2tzOntmb290ZXI6aXRlbXM9Pntjb25zdCBpPWl0ZW1zWzBdLmRhdGFJbmRleDtyZXR1cm5gRW50cmVnYWRhczogJHtlbnRyZWdhZGFzW2ldfS8ke3RvdGFsZXNbaV19ICgke3BjdHNbaV19JSlcblRlbmRlbmNpYTogJHt0cmVuZFtpXX1gO319fX0sc2NhbGVzOnt4Ont0aWNrczp7YXV0b1NraXA6ZmFsc2UsbWF4Um90YXRpb246MzUsZm9udDp7c2l6ZToxMH19LGdyaWQ6e2Rpc3BsYXk6ZmFsc2V9fSx5OntiZWdpbkF0WmVybzp0cnVlLHRpY2tzOntzdGVwU2l6ZTo1LGZvbnQ6e3NpemU6MTF9fSxncmlkOntjb2xvcjoncmdiYSgwLDAsMCwwLjA2KSd9fX19CiAgfSk7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQobGVnZW5kSWQpLmlubmVySFRNTD1zcHJpbnRzLm1hcCgoc3AsaSk9PnsKICAgIGNvbnN0IHBjdD1wY3RzW2ldLGNvbG9yPXBjdD49OTA/JyMzQjZEMTEnOnBjdD49NzA/JyM4NTRGMEInOicjQTMyRDJEJzsKICAgIHJldHVybmA8c3BhbiBjbGFzcz0icGN0LXBpbGwiPjxzcGFuIHN0eWxlPSJjb2xvcjojODg4Ij4ke3NwfTwvc3Bhbj48c3BhbiBzdHlsZT0iZm9udC13ZWlnaHQ6NTAwO2NvbG9yOiR7Y29sb3J9Ij4ke3BjdH0lPC9zcGFuPjwvc3Bhbj5gOwogIH0pLmpvaW4oJycpOwp9CgpmdW5jdGlvbiBkZWx0YShjdXJyLHByZXYsaWQsaW52ZXJ0R29vZD1mYWxzZSl7CiAgaWYocHJldj09PW51bGx8fHByZXY9PT11bmRlZmluZWQpe2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKGlkKS50ZXh0Q29udGVudD0nJztyZXR1cm47fQogIGNvbnN0IGRpZmY9Y3Vyci1wcmV2OwogIGlmKGRpZmY9PT0wKXtkb2N1bWVudC5nZXRFbGVtZW50QnlJZChpZCkudGV4dENvbnRlbnQ9J1NpbiBjYW1iaW8nO2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKGlkKS5jbGFzc05hbWU9J21ldHJpYy1kZWx0YSBuZXV0cmFsJztyZXR1cm47fQogIGNvbnN0IHVwPWRpZmY+MCwgZ29vZD1pbnZlcnRHb29kPyF1cDp1cDsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZChpZCkudGV4dENvbnRlbnQ9KHVwPyfilrIgKyc6J+KWvCAnKStkaWZmKycgdnMgYW50ZXJpb3InOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKGlkKS5jbGFzc05hbWU9J21ldHJpYy1kZWx0YSAnKyhnb29kPyd1cCc6J2Rvd24nKTsKfQoKZnVuY3Rpb24gc3BWYWxzKHJvd3Msc3BMaXN0LGVzdGFkbyl7cmV0dXJuIHNwTGlzdC5tYXAoc3A9PnJvd3MuZmlsdGVyKHI9PnIuc3ByaW50PT09c3AmJnIuZXN0YWRvPT09ZXN0YWRvKS5sZW5ndGgpO30KZnVuY3Rpb24gc3BUb3RhbChyb3dzLHNwTGlzdCl7cmV0dXJuIHNwTGlzdC5tYXAoc3A9PnJvd3MuZmlsdGVyKHI9PnIuc3ByaW50PT09c3ApLmxlbmd0aCk7fQoKZnVuY3Rpb24gZmluZFNoZWV0KHdiLGtleXdvcmRzKXsKICBjb25zdCBuYW1lcz1PYmplY3Qua2V5cyh3Yi5TaGVldHMpOwogIGZvcihjb25zdCBrdyBvZiBrZXl3b3Jkcyl7Y29uc3QgZm91bmQ9bmFtZXMuZmluZChuPT5uLnRvTG93ZXJDYXNlKCkuaW5jbHVkZXMoa3cudG9Mb3dlckNhc2UoKSkpO2lmKGZvdW5kKXJldHVybiBmb3VuZDt9CiAgcmV0dXJuIG51bGw7Cn0KCmZ1bmN0aW9uIGdldFJvd3Mod2Isa2V5d29yZHMpewogIGNvbnN0IHNoZWV0TmFtZT1maW5kU2hlZXQod2Isa2V5d29yZHMpOwogIGlmKCFzaGVldE5hbWUpcmV0dXJue3Jvd3M6W10sc2hlZXROYW1lOm51bGx9OwogIGNvbnN0IHNoZWV0PXdiLlNoZWV0c1tzaGVldE5hbWVdOwogIGNvbnN0IGRhdGE9WExTWC51dGlscy5zaGVldF90b19qc29uKHNoZWV0LHtoZWFkZXI6MSxkZWZ2YWw6Jyd9KTsKICBpZihkYXRhLmxlbmd0aDwyKXJldHVybntyb3dzOltdLHNoZWV0TmFtZX07CiAgY29uc3QgaGVhZGVyPWRhdGFbMF0ubWFwKGg9PlN0cmluZyhoKS50cmltKCkudG9Mb3dlckNhc2UoKSk7CiAgY29uc3QgaWR4PXsKICAgIHNwcmludDpoZWFkZXIuZmluZEluZGV4KGg9PmguaW5jbHVkZXMoJ3NwcmluZycpfHxoLmluY2x1ZGVzKCdzcHJpbnQnKSksCiAgICBlc3RhZG86aGVhZGVyLmZpbmRJbmRleChoPT5oPT09J2VzdGFkbycpLAogICAgcmVzdW1lbjpoZWFkZXIuZmluZEluZGV4KGg9Pmg9PT0ncmVzdW1lbicpLAogICAgcGVyc29uYTpoZWFkZXIuZmluZEluZGV4KGg9PmguaW5jbHVkZXMoJ3BlcnNvbmEnKSksCiAgICBodzpoZWFkZXIuZmluZEluZGV4KGg9PmguaW5jbHVkZXMoJ2hvbWV3b3JrJykpLAogIH07CiAgY29uc3Qgcm93cz1kYXRhLnNsaWNlKDEpLm1hcChyb3c9Pih7CiAgICBzcHJpbnQ6bm9ybVNwcmludChTdHJpbmcocm93W2lkeC5zcHJpbnRdfHwnJykpLAogICAgZXN0YWRvOlN0cmluZyhyb3dbaWR4LmVzdGFkb118fCcnKS50cmltKCksCiAgICByZXN1bWVuOlN0cmluZyhyb3dbaWR4LnJlc3VtZW5dfHwnJykudHJpbSgpLAogICAgcGVyc29uYTpTdHJpbmcocm93W2lkeC5wZXJzb25hXXx8JycpLnRyaW0oKSwKICAgIGh3OlN0cmluZyhyb3dbaWR4Lmh3XXx8JycpLnRyaW0oKSwKICB9KSk7CiAgcmV0dXJue3Jvd3Msc2hlZXROYW1lfTsKfQoKZnVuY3Rpb24gZ2V0RXF1aXBvKHdiKXsKICBjb25zdCBzaGVldE5hbWU9ZmluZFNoZWV0KHdiLFsnZXF1aXBvJywndGVhbSddKTsKICBpZighc2hlZXROYW1lKXJldHVybiBuZXcgU2V0KCk7CiAgY29uc3QgZGF0YT1YTFNYLnV0aWxzLnNoZWV0X3RvX2pzb24od2IuU2hlZXRzW3NoZWV0TmFtZV0se2hlYWRlcjoxLGRlZnZhbDonJ30pOwogIGNvbnN0IGxvY2FsPW5ldyBTZXQoKTsKICBkYXRhLnNsaWNlKDEpLmZvckVhY2gocm93PT57Y29uc3Qgdj1TdHJpbmcocm93WzBdfHwnJykudHJpbSgpO2lmKHYmJnYudG9Mb3dlckNhc2UoKSE9PSdsb2NhbCcpbG9jYWwuYWRkKHYudG9VcHBlckNhc2UoKSk7fSk7CiAgcmV0dXJuIGxvY2FsOwp9CgpmdW5jdGlvbiBsb2FkRmlsZShpbnB1dCl7CiAgY29uc3QgZmlsZT1pbnB1dC5maWxlc1swXTsKICBpZighZmlsZSlyZXR1cm47CiAgY29uc3QgcmVhZGVyPW5ldyBGaWxlUmVhZGVyKCk7CiAgcmVhZGVyLm9ubG9hZD1lPT57CiAgICBjb25zdCB3Yj1YTFNYLnJlYWQoZS50YXJnZXQucmVzdWx0LHt0eXBlOidhcnJheSd9KTsKICAgIHByb2Nlc3NEYXRhKHdiLGZpbGUubmFtZSk7CiAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgndXBsb2FkLXNjcmVlbicpLnN0eWxlLmRpc3BsYXk9J25vbmUnOwogICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2Rhc2hib2FyZCcpLnN0eWxlLmRpc3BsYXk9J2Jsb2NrJzsKICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzaWRlYmFyJykuc3R5bGUuZGlzcGxheT0nYmxvY2snOwogICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2hlYWRlci11cGxvYWQtbGFiZWwnKS5jbGFzc0xpc3QuYWRkKCdsb2FkZWQnKTsKICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdmaWxlLW5hbWUnKS50ZXh0Q29udGVudD1maWxlLm5hbWU7CiAgICBzZXR1cE5hdk9ic2VydmVyKCk7CiAgfTsKICByZWFkZXIucmVhZEFzQXJyYXlCdWZmZXIoZmlsZSk7Cn0KCmZ1bmN0aW9uIHByb2Nlc3NEYXRhKHdiLGZpbGVOYW1lKXsKICBjb25zdCBhbGVydHM9W107CiAgY29uc3Qge3Jvd3M6Z2VuZXJhbCxzaGVldE5hbWU6Z25OYW1lfT1nZXRSb3dzKHdiLFsnZXN0YXR1cyBnZW5lcmFsJywnZ2VuZXJhbCddKTsKICBjb25zdCB7cm93czpwb3JTcHJpbnQsc2hlZXROYW1lOnBzTmFtZX09Z2V0Um93cyh3YixbJ2VzdGF0dXMgcG9yIHNwcmluZycsJ3BvciBzcHJpbmcnLCdzcHJpbnQnXSk7CiAgaWYoIWduTmFtZSlhbGVydHMucHVzaCgn4pqg77iPIE5vIHNlIGVuY29udHLDsyBsYSBob2phICJlc3RhdHVzIGdlbmVyYWwiLiBWZXJpZmljYSBlbCBub21icmUuJyk7CiAgaWYoIXBzTmFtZSlhbGVydHMucHVzaCgn4pqg77iPIE5vIHNlIGVuY29udHLDsyBsYSBob2phICJlc3RhdHVzIHBvciBzcHJpbmciLiBWZXJpZmljYSBlbCBub21icmUuJyk7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2FsZXJ0cycpLmlubmVySFRNTD1hbGVydHMubWFwKGE9PmA8ZGl2IGNsYXNzPSJhbGVydCI+JHthfTwvZGl2PmApLmpvaW4oJycpOwoKICBjb25zdCBsb2NhbFRlYW09Z2V0RXF1aXBvKHdiKTsKICBjb25zdCBnZW5GaWx0ZXJlZD1nZW5lcmFsLmZpbHRlcihyPT5yLnNwcmludCk7CiAgLy8gTm9ybWFsaXplIHNwcmludHMgaW4gZGF0YQogIGdlbkZpbHRlcmVkLmZvckVhY2gocj0+ci5zcHJpbnQ9bm9ybVNwcmludChyLnNwcmludCkpOwogIHBvclNwcmludC5mb3JFYWNoKHI9PnIuc3ByaW50PW5vcm1TcHJpbnQoci5zcHJpbnQpKTsKICBjb25zdCBwc0ZpbHRlcmVkPXBvclNwcmludC5maWx0ZXIocj0+ci5zcHJpbnQpOwogIGNvbnN0IHNwcmludHM9U1BSSU5UX09SREVSLmZpbHRlcihzcD0+Z2VuRmlsdGVyZWQuc29tZShyPT5yLnNwcmludD09PXNwKSk7CiAgY29uc3Qgc3ByaW50TGFiZWxzPXNwcmludHMubWFwKHM9PnMucmVwbGFjZSgnU3ByaW50ICcsJ1MnKS5yZXBsYWNlKCctUycsJyBTJykpOwoKICAvLyBDb21wYXJhY2nDs24gY29uIGNhcmdhIGFudGVyaW9yCiAgY29uc3QgcHJldj1wcmV2RGF0YTsKICBjb25zdCBlYz17fTtnZW5GaWx0ZXJlZC5mb3JFYWNoKHI9PmVjW3IuZXN0YWRvXT0oZWNbci5lc3RhZG9dfHwwKSsxKTsKICBjb25zdCBjdXJyPXt0b3RhbDpnZW5GaWx0ZXJlZC5sZW5ndGgsYWNjZXB0ZWQ6ZWNbJ0FjY2VwdGVkJ118fDAsZGlzY2FyZGVkOmVjWydEaXNjYXJkZWQnXXx8MCxibG9ja2VkOmVjWydCbG9ja2VkJ118fDAsaW5wcm9ncmVzczplY1snSW4gUHJvZ3Jlc3MnXXx8MCxydHY6ZWNbJ1JlYWR5IFRvIFZlcmlmeSddfHwwLGFuYWx5c2luZzplY1snQW5hbHlzaW5nJ118fDAsb3RoZXI6KGVjWydUbyBSZXdvcmsnXXx8MCkrKGVjWydUZXN0J118fDApfTsKCiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2Rhc2gtc3ViJykudGV4dENvbnRlbnQ9YFJlZ2lzdHJvcyBjb24gc3ByaW50IGFzaWduYWRvIMK3ICR7Z25OYW1lfHwn4oCUJ30gwrcgJHtnZW5GaWx0ZXJlZC5sZW5ndGh9IHJlZ2lzdHJvc2A7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ20tdG90YWwnKS50ZXh0Q29udGVudD1jdXJyLnRvdGFsOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdtLWFjY2VwdGVkJykudGV4dENvbnRlbnQ9Y3Vyci5hY2NlcHRlZDsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnbS1kaXNjYXJkZWQnKS50ZXh0Q29udGVudD1jdXJyLmRpc2NhcmRlZDsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnbS1ibG9ja2VkJykudGV4dENvbnRlbnQ9Y3Vyci5ibG9ja2VkOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdtLWlucHJvZ3Jlc3MnKS50ZXh0Q29udGVudD1jdXJyLmlucHJvZ3Jlc3M7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ20tcnR2JykudGV4dENvbnRlbnQ9Y3Vyci5ydHY7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ20tYW5hbHlzaW5nJykudGV4dENvbnRlbnQ9Y3Vyci5hbmFseXNpbmc7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ20tb3RoZXInKS50ZXh0Q29udGVudD1jdXJyLm90aGVyOwoKICBpZihwcmV2KXsKICAgIGRlbHRhKGN1cnIudG90YWwscHJldi50b3RhbCwnZC10b3RhbCcpOwogICAgZGVsdGEoY3Vyci5hY2NlcHRlZCxwcmV2LmFjY2VwdGVkLCdkLWFjY2VwdGVkJyk7CiAgICBkZWx0YShjdXJyLmRpc2NhcmRlZCxwcmV2LmRpc2NhcmRlZCwnZC1kaXNjYXJkZWQnLHRydWUpOwogICAgZGVsdGEoY3Vyci5ibG9ja2VkLHByZXYuYmxvY2tlZCwnZC1ibG9ja2VkJyx0cnVlKTsKICAgIGRlbHRhKGN1cnIuaW5wcm9ncmVzcyxwcmV2LmlucHJvZ3Jlc3MsJ2QtaW5wcm9ncmVzcycsdHJ1ZSk7CiAgICBkZWx0YShjdXJyLnJ0dixwcmV2LnJ0diwnZC1ydHYnKTsKICAgIGRlbHRhKGN1cnIuYW5hbHlzaW5nLHByZXYuYW5hbHlzaW5nLCdkLWFuYWx5c2luZycsdHJ1ZSk7CiAgICBkZWx0YShjdXJyLm90aGVyLHByZXYub3RoZXIsJ2Qtb3RoZXInLHRydWUpOwogIH0KICBwcmV2RGF0YT1jdXJyOwoKICAvLyBFcXVpcG8KICBjb25zdCBsb2NhbFJvd3M9Z2VuRmlsdGVyZWQuZmlsdGVyKHI9PmxvY2FsVGVhbS5oYXMoci5wZXJzb25hLnRvVXBwZXJDYXNlKCkpKTsKICBjb25zdCBnbG9iYWxSb3dzPWdlbkZpbHRlcmVkLmZpbHRlcihyPT4hbG9jYWxUZWFtLmhhcyhyLnBlcnNvbmEudG9VcHBlckNhc2UoKSkpOwogIGNvbnN0IG5MPWxvY2FsUm93cy5sZW5ndGgsbkc9Z2xvYmFsUm93cy5sZW5ndGgsblQ9bkwrbkc7CiAgY29uc3QgcEw9blQ+MD9NYXRoLnJvdW5kKG5ML25UKjEwMCk6MCxwRz0xMDAtcEw7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2VxLXRvdGFsLWJhZGdlJykudGV4dENvbnRlbnQ9blQrJyByZWdpc3Ryb3MgY29uIHNwcmludCc7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3QtbG9jYWwnKS50ZXh0Q29udGVudD1uTDsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgndC1nbG9iYWwnKS50ZXh0Q29udGVudD1uRzsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgndC1sb2NhbC1wY3QnKS50ZXh0Q29udGVudD1wTCsnJSBkZWwgdG90YWwnOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCd0LWdsb2JhbC1wY3QnKS50ZXh0Q29udGVudD1wRysnJSBkZWwgdG90YWwnOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdiYXItbG9jYWwnKS5zdHlsZS53aWR0aD1wTCsnJSc7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2Jhci1nbG9iYWwnKS5zdHlsZS53aWR0aD1wRysnJSc7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2Jhci1sb2NhbC1sYWJlbCcpLnRleHRDb250ZW50PSdMb2NhbCAnK3BMKyclJzsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnYmFyLWdsb2JhbC1sYWJlbCcpLnRleHRDb250ZW50PSdHbG9iYWwgJytwRysnJSc7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2Jhci1sb2NhbC1uJykudGV4dENvbnRlbnQ9bkwrJyB0YXJlYXMnOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdiYXItZ2xvYmFsLW4nKS50ZXh0Q29udGVudD1uRysnIHRhcmVhcyc7CgogIGZ1bmN0aW9uIG1rKGlkLGRhdGEsb3B0aW9ucyl7ZGVzdHJveUNoYXJ0KGlkKTtjaGFydHNbaWRdPW5ldyBDaGFydChkb2N1bWVudC5nZXRFbGVtZW50QnlJZChpZCkse2RhdGEsb3B0aW9uc30pO30KCiAgLy8gRXN0YXR1cyBnZW5lcmFsCiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2MxYi1jb3VudCcpLnRleHRDb250ZW50PWdlbkZpbHRlcmVkLmxlbmd0aCsnIHJlZ2lzdHJvcyc7CiAgY29uc3QgZWdUb3RhbD1zcFRvdGFsKGdlbkZpbHRlcmVkLHNwcmludHMpOwogIG1rKCdjMWInLHtsYWJlbHM6c3ByaW50TGFiZWxzLGRhdGFzZXRzOltiYXJEcyhzcHJpbnRzLGVnVG90YWwpLGxpbmVEcygnQWNjZXB0ZWQnLHNwVmFscyhnZW5GaWx0ZXJlZCxzcHJpbnRzLCdBY2NlcHRlZCcpLCcjNjM5OTIyJyksbGluZURzKCdEaXNjYXJkZWQnLHNwVmFscyhnZW5GaWx0ZXJlZCxzcHJpbnRzLCdEaXNjYXJkZWQnKSwnI0UyNEI0QScsWzYsM10pLGxpbmVEcygnSW4gUHJvZ3Jlc3MnLHNwVmFscyhnZW5GaWx0ZXJlZCxzcHJpbnRzLCdJbiBQcm9ncmVzcycpLCcjRUY5RjI3JyxbNCw0XSksbGluZURzKCdCbG9ja2VkJyxzcFZhbHMoZ2VuRmlsdGVyZWQsc3ByaW50cywnQmxvY2tlZCcpLCcjN0Y3N0REJyxbMiwzXSksbGluZURzKCdSZWFkeSBUbyBWZXJpZnknLHNwVmFscyhnZW5GaWx0ZXJlZCxzcHJpbnRzLCdSZWFkeSBUbyBWZXJpZnknKSwnIzE4NUZBNScsWzQsNF0pLGxpbmVEcygnQW5hbHlzaW5nJyxzcFZhbHMoZ2VuRmlsdGVyZWQsc3ByaW50cywnQW5hbHlzaW5nJyksJyMxRDlFNzUnLFsyLDNdKV19LG9wdHMoNSkpOwoKICAvLyBHQVAgR2VuZXJhbAogIGNvbnN0IGdhcEVnPXNwcmludHMubWFwKHNwPT5nZW5GaWx0ZXJlZC5maWx0ZXIocj0+ci5zcHJpbnQ9PT1zcCYmWydBY2NlcHRlZCcsJ1JlYWR5IFRvIFZlcmlmeScsJ0Rpc2NhcmRlZCddLmluY2x1ZGVzKHIuZXN0YWRvKSkubGVuZ3RoKTsKICBidWlsZEdhcCgnY2dhcF9nZW5lcmFsJywncGN0LWdlbmVyYWwnLCdjZ2FwLWdlbmVyYWwtY291bnQnLHNwcmludHMsZWdUb3RhbCxnYXBFZyk7CgogIC8vIEVzdGF0dXMgcG9yIHNwcmludAogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjMS1jb3VudCcpLnRleHRDb250ZW50PXBzRmlsdGVyZWQubGVuZ3RoKycgcmVnaXN0cm9zJzsKICBjb25zdCBwc1RvdGFsMj1zcFRvdGFsKHBzRmlsdGVyZWQsc3ByaW50cyk7CiAgbWsoJ2MxJyx7bGFiZWxzOnNwcmludExhYmVscyxkYXRhc2V0czpbYmFyRHMoc3ByaW50cyxwc1RvdGFsMiksbGluZURzKCdBY2NlcHRlZCcsc3BWYWxzKHBzRmlsdGVyZWQsc3ByaW50cywnQWNjZXB0ZWQnKSwnIzYzOTkyMicpLGxpbmVEcygnRGlzY2FyZGVkJyxzcFZhbHMocHNGaWx0ZXJlZCxzcHJpbnRzLCdEaXNjYXJkZWQnKSwnI0UyNEI0QScsWzYsM10pLGxpbmVEcygnSW4gUHJvZ3Jlc3MnLHNwVmFscyhwc0ZpbHRlcmVkLHNwcmludHMsJ0luIFByb2dyZXNzJyksJyNFRjlGMjcnLFs0LDRdKSxsaW5lRHMoJ0Jsb2NrZWQnLHNwVmFscyhwc0ZpbHRlcmVkLHNwcmludHMsJ0Jsb2NrZWQnKSwnIzdGNzdERCcsWzIsM10pXX0sb3B0cyg1KSk7CgogIC8vIEdBUCBwb3Igc3ByaW50CiAgY29uc3QgZ2FwUHM9c3ByaW50cy5tYXAoc3A9PnBzRmlsdGVyZWQuZmlsdGVyKHI9PnIuc3ByaW50PT09c3AmJlsnQWNjZXB0ZWQnLCdSZWFkeSBUbyBWZXJpZnknLCdEaXNjYXJkZWQnXS5pbmNsdWRlcyhyLmVzdGFkbykpLmxlbmd0aCk7CiAgYnVpbGRHYXAoJ2NnYXBfc3ByaW50JywncGN0LXNwcmludCcsJ2NnYXAtc3ByaW50LWNvdW50JyxzcHJpbnRzLHBzVG90YWwyLGdhcFBzKTsKCiAgLy8gQW7DoWxpc2lzCiAgY29uc3QgYW5hbFJvd3M9Z2VuRmlsdGVyZWQuZmlsdGVyKHI9Pi9hblthw6FdbGlbc3pdaXMvaS50ZXN0KHIucmVzdW1lbikpOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjMi1jb3VudCcpLnRleHRDb250ZW50PWFuYWxSb3dzLmxlbmd0aCsnIHJlZ2lzdHJvcyc7CiAgbWsoJ2MyJyx7bGFiZWxzOnNwcmludExhYmVscyxkYXRhc2V0czpbYmFyRHMoc3ByaW50cyxzcFRvdGFsKGFuYWxSb3dzLHNwcmludHMpKSxsaW5lRHMoJ0FjY2VwdGVkJyxzcFZhbHMoYW5hbFJvd3Msc3ByaW50cywnQWNjZXB0ZWQnKSwnIzYzOTkyMicpLGxpbmVEcygnRGlzY2FyZGVkJyxzcFZhbHMoYW5hbFJvd3Msc3ByaW50cywnRGlzY2FyZGVkJyksJyNFMjRCNEEnLFs2LDNdKSxsaW5lRHMoJ1JlYWR5IFRvIFZlcmlmeScsc3BWYWxzKGFuYWxSb3dzLHNwcmludHMsJ1JlYWR5IFRvIFZlcmlmeScpLCcjMTg1RkE1JyxbNCw0XSksbGluZURzKCdJbiBQcm9ncmVzcycsc3BWYWxzKGFuYWxSb3dzLHNwcmludHMsJ0luIFByb2dyZXNzJyksJyNFRjlGMjcnLFsyLDRdKSxsaW5lRHMoJ0FuYWx5c2luZycsc3BWYWxzKGFuYWxSb3dzLHNwcmludHMsJ0FuYWx5c2luZycpLCcjN0Y3N0REJyxbMiwzXSldfSxvcHRzKDMpKTsKCiAgLy8gVmFsaWRhY2nDs24KICBjb25zdCB2YWxSb3dzPWdlbkZpbHRlcmVkLmZpbHRlcihyPT4vdmFsaWRhY2lbb8OzXW4vaS50ZXN0KHIucmVzdW1lbikpOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjMy1jb3VudCcpLnRleHRDb250ZW50PXZhbFJvd3MubGVuZ3RoKycgcmVnaXN0cm9zJzsKICBtaygnYzMnLHtsYWJlbHM6c3ByaW50TGFiZWxzLGRhdGFzZXRzOltiYXJEcyhzcHJpbnRzLHNwVG90YWwodmFsUm93cyxzcHJpbnRzKSksbGluZURzKCdBY2NlcHRlZCcsc3BWYWxzKHZhbFJvd3Msc3ByaW50cywnQWNjZXB0ZWQnKSwnIzYzOTkyMicpLGxpbmVEcygnRGlzY2FyZGVkJyxzcFZhbHModmFsUm93cyxzcHJpbnRzLCdEaXNjYXJkZWQnKSwnI0UyNEI0QScsWzYsM10pLGxpbmVEcygnSW4gUHJvZ3Jlc3MnLHNwVmFscyh2YWxSb3dzLHNwcmludHMsJ0luIFByb2dyZXNzJyksJyNFRjlGMjcnLFsyLDRdKSxsaW5lRHMoJ0Jsb2NrZWQnLHNwVmFscyh2YWxSb3dzLHNwcmludHMsJ0Jsb2NrZWQnKSwnIzdGNzdERCcsWzQsNF0pLGxpbmVEcygnQW5hbHlzaW5nJyxzcFZhbHModmFsUm93cyxzcHJpbnRzLCdBbmFseXNpbmcnKSwnIzE4NUZBNScsWzIsM10pXX0sb3B0cygyKSk7CgogIC8vIEVxdWlwbyBsb2NhbAogIGVxU3ByaW50cz1zcHJpbnRMYWJlbHM7CiAgY29uc3QgbG9jYWxQZXJzb25hcz1bLi4ubmV3IFNldChsb2NhbFJvd3MubWFwKHI9PnIucGVyc29uYSkuZmlsdGVyKEJvb2xlYW4pKV07CiAgZXFEYXRhPXthbGw6e319OwogIGxvY2FsUGVyc29uYXMuZm9yRWFjaCgocCxpZHgpPT57CiAgICBjb25zdCB2YWxzPXNwcmludHMubWFwKHNwPT5sb2NhbFJvd3MuZmlsdGVyKHI9PnIuc3ByaW50PT09c3AmJnIucGVyc29uYT09PXApLmxlbmd0aCk7CiAgICBjb25zdCBzaG9ydD1wLnNwbGl0KCcgJykuc2xpY2UoMCwyKS5qb2luKCcgJyk7CiAgICBlcURhdGEuYWxsW3Nob3J0XT17dmFscyxjb2xvcjpQRVJTT05fQ09MT1JTW2lkeCVQRVJTT05fQ09MT1JTLmxlbmd0aF19OwogICAgZXFEYXRhW3BdPXt9OwogICAgY29uc3QgcFJvd3M9bG9jYWxSb3dzLmZpbHRlcihyPT5yLnBlcnNvbmE9PT1wKTsKICAgIGNvbnN0IHBFc3RhZG9zPVsuLi5uZXcgU2V0KHBSb3dzLm1hcChyPT5yLmVzdGFkbykpXTsKICAgIHBFc3RhZG9zLmZvckVhY2goZXN0PT57CiAgICAgIGNvbnN0IHZhbHMyPXNwcmludHMubWFwKHNwPT5wUm93cy5maWx0ZXIocj0+ci5zcHJpbnQ9PT1zcCYmci5lc3RhZG89PT1lc3QpLmxlbmd0aCk7CiAgICAgIGNvbnN0IHRvdD1wUm93cy5maWx0ZXIocj0+ci5lc3RhZG89PT1lc3QpLmxlbmd0aDsKICAgICAgY29uc3QgcGN0PU1hdGgucm91bmQodG90L3BSb3dzLmxlbmd0aCoxMDApOwogICAgICBlcURhdGFbcF1bZXN0KycgICcrcGN0KyclJ109e3ZhbHM6dmFsczIsY29sb3I6Q09MT1JTW2VzdF18fCcjODg4J307CiAgICB9KTsKICB9KTsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZXEtYmFkZ2UnKS50ZXh0Q29udGVudD1sb2NhbFJvd3MubGVuZ3RoKycgcmVnaXN0cm9zJzsKICBjb25zdCBmaWx0ZXJEaXY9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2VxLWZpbHRlcnMnKTsKICBmaWx0ZXJEaXYuaW5uZXJIVE1MPWA8YnV0dG9uIGNsYXNzPSJmYnRuIGFjdGl2ZSIgb25jbGljaz0iZmlsdGVyRXEodGhpcywnYWxsJykiPlRvZG9zPC9idXR0b24+YCsKICAgIGxvY2FsUGVyc29uYXMubWFwKHA9PmA8YnV0dG9uIGNsYXNzPSJmYnRuIiBvbmNsaWNrPSJmaWx0ZXJFcSh0aGlzLCcke3B9JykiPiR7cC5zcGxpdCgnICcpLnNsaWNlKDAsMikuam9pbignICcpfTwvYnV0dG9uPmApLmpvaW4oJycpOwogIGJ1aWxkRXFDaGFydCgnYWxsJyk7CgogIC8vIEhvbWV3b3JrIGRlbGF5CiAgZnVuY3Rpb24gaHdDb3VudHMocm93cyl7Y29uc3QgYz17fTtyb3dzLmZpbHRlcihyPT5yLmh3KS5mb3JFYWNoKHI9Pntjb25zdCB2PXBhcnNlSW50KHIuaHcpO2lmKCFpc05hTih2KSYmdj4wKWNbdl09KGNbdl18fDApKzE7fSk7cmV0dXJuIGM7fQogIGNvbnN0IGh3QT1od0NvdW50cyhnZW5GaWx0ZXJlZC5maWx0ZXIocj0+L2FuW2HDoV1saVtzel1pcy9pLnRlc3Qoci5yZXN1bWVuKSkpOwogIGNvbnN0IGh3Vj1od0NvdW50cyhnZW5GaWx0ZXJlZC5maWx0ZXIocj0+L3ZhbGlkYWNpW2/Ds11uL2kudGVzdChyLnJlc3VtZW4pKSk7CiAgY29uc3QgbWF4SHc9TWF0aC5tYXgoLi4uWy4uLk9iamVjdC5rZXlzKGh3QSksLi4uT2JqZWN0LmtleXMoaHdWKV0ubWFwKE51bWJlciksMSk7CiAgY29uc3QgZGxhYmVscz1BcnJheS5mcm9tKHtsZW5ndGg6bWF4SHd9LChfLGkpPT4oaSsxKSsnIHNwcmludCcrKGk+MD8ncyc6JycpKTsKICBjb25zdCBhZFZhbHM9QXJyYXkuZnJvbSh7bGVuZ3RoOm1heEh3fSwoXyxpKT0+aHdBW2krMV18fDApOwogIGNvbnN0IHZkVmFscz1BcnJheS5mcm9tKHtsZW5ndGg6bWF4SHd9LChfLGkpPT5od1ZbaSsxXXx8MCk7CiAgY29uc3QgbWF4QT1NYXRoLm1heCguLi5hZFZhbHMsMSksbWF4Vj1NYXRoLm1heCguLi52ZFZhbHMsMSk7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2NhLWNvdW50JykudGV4dENvbnRlbnQ9T2JqZWN0LnZhbHVlcyhod0EpLnJlZHVjZSgoYSxiKT0+YStiLDApKycgdGFyZWFzIGNvbiByZXRyYXNvJzsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY3YtY291bnQnKS50ZXh0Q29udGVudD1PYmplY3QudmFsdWVzKGh3VikucmVkdWNlKChhLGIpPT5hK2IsMCkrJyB0YXJlYXMgY29uIHJldHJhc28nOwogIGNvbnN0IGRPcHRzPXtyZXNwb25zaXZlOnRydWUsbWFpbnRhaW5Bc3BlY3RSYXRpbzpmYWxzZSxsYXlvdXQ6e3BhZGRpbmc6e3RvcDoyNH19LHBsdWdpbnM6e2xlZ2VuZDp7ZGlzcGxheTpmYWxzZX0sZGF0YWxhYmVsczp7YW5jaG9yOidlbmQnLGFsaWduOidlbmQnLGNvbG9yOidyZ2JhKDEwMCwxMDAsMTAwLDAuOCknLGZvbnQ6e3NpemU6MTEsd2VpZ2h0Oic1MDAnfSxmb3JtYXR0ZXI6dj0+dj4wP3Y6Jyd9fSxzY2FsZXM6e3g6e3RpY2tzOnthdXRvU2tpcDpmYWxzZSxtYXhSb3RhdGlvbjozNSxmb250OntzaXplOjEwfX0sZ3JpZDp7ZGlzcGxheTpmYWxzZX19LHk6e2JlZ2luQXRaZXJvOnRydWUsdGlja3M6e3N0ZXBTaXplOjUsZm9udDp7c2l6ZToxMX19LGdyaWQ6e2NvbG9yOidyZ2JhKDAsMCwwLDAuMDYpJ319fX07CiAgZGVzdHJveUNoYXJ0KCdjYScpO2NoYXJ0c1snY2EnXT1uZXcgQ2hhcnQoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2NhJykse3R5cGU6J2JhcicsZGF0YTp7bGFiZWxzOmRsYWJlbHMsZGF0YXNldHM6W3tkYXRhOmFkVmFscyxiYWNrZ3JvdW5kQ29sb3I6YWRWYWxzLm1hcCh2PT5gcmdiYSgyNCw5NSwxNjUsJHsoMC4zKzAuNyoodi9tYXhBKSkudG9GaXhlZCgyKX0pYCksYm9yZGVyUmFkaXVzOjQsYm9yZGVyU2tpcHBlZDpmYWxzZX1dfSxvcHRpb25zOmRPcHRzfSk7CiAgZGVzdHJveUNoYXJ0KCdjdicpO2NoYXJ0c1snY3YnXT1uZXcgQ2hhcnQoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2N2Jykse3R5cGU6J2JhcicsZGF0YTp7bGFiZWxzOmRsYWJlbHMsZGF0YXNldHM6W3tkYXRhOnZkVmFscyxiYWNrZ3JvdW5kQ29sb3I6dmRWYWxzLm1hcCh2PT52PjA/YHJnYmEoMjksMTU4LDExNywkeygwLjMrMC43Kih2L21heFYpKS50b0ZpeGVkKDIpfSlgOidyZ2JhKDAsMCwwLDApJyksYm9yZGVyUmFkaXVzOjQsYm9yZGVyU2tpcHBlZDpmYWxzZX1dfSxvcHRpb25zOmRPcHRzfSk7Cn0KCmZ1bmN0aW9uIGJ1aWxkRXFDaGFydChwZXJzb25hKXsKICBjb25zdCBkPWVxRGF0YVtwZXJzb25hXXx8ZXFEYXRhWydhbGwnXTsKICBkZXN0cm95Q2hhcnQoJ2M0Jyk7CiAgLy8gU29ydCBieSB3ZWlnaHRlZCBhdmVyYWdlIGFjcm9zcyBzcHJpbnRzIChsYXJnZXIgdG90YWxzIGF0IGJvdHRvbSkKICBjb25zdCBzb3J0ZWQ9T2JqZWN0LmVudHJpZXMoZCkuc29ydCgoYSxiKT0+ewogICAgY29uc3QgdkE9YVsxXS52YWxzfHxhWzFdLmRhdGF8fFtdLCB2Qj1iWzFdLnZhbHN8fGJbMV0uZGF0YXx8W107CiAgICBjb25zdCB0b3RBPXZBLnJlZHVjZSgocyx2KT0+cyt2LDApLCB0b3RCPXZCLnJlZHVjZSgocyx2KT0+cyt2LDApOwogICAgY29uc3QgYXZnQT12QS5yZWR1Y2UoKHMsdixpKT0+cyt2KihpKzEpLDApL01hdGgubWF4KHRvdEEsMSk7CiAgICBjb25zdCBhdmdCPXZCLnJlZHVjZSgocyx2LGkpPT5zK3YqKGkrMSksMCkvTWF0aC5tYXgodG90QiwxKTsKICAgIHJldHVybiB0b3RCLXRvdEF8fGF2Z0EtYXZnQjsKICB9KTsKICBjb25zdCBkYXRhc2V0cz1zb3J0ZWQubWFwKChbbGFiZWwse3ZhbHMsZGF0YSxjb2xvcn1dKT0+e2NvbnN0IGQyPXZhbHN8fGRhdGE7cmV0dXJue2xhYmVsLGRhdGE6ZDIsYmFja2dyb3VuZENvbG9yOmNvbG9yLGJvcmRlclJhZGl1czozLGJvcmRlclNraXBwZWQ6ZmFsc2UsZGF0YWxhYmVsczp7ZGlzcGxheTpjdHg9PmQyW2N0eC5kYXRhSW5kZXhdPjAsY29sb3I6JyNmZmYnLGZvbnQ6e3NpemU6MTAsd2VpZ2h0Oic1MDAnfSxmb3JtYXR0ZXI6dj0+dn19O30pOwogIGNoYXJ0c1snYzQnXT1uZXcgQ2hhcnQoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2M0Jykse3R5cGU6J2JhcicsZGF0YTp7bGFiZWxzOmVxU3ByaW50cyxkYXRhc2V0c30sb3B0aW9uczp7cmVzcG9uc2l2ZTp0cnVlLG1haW50YWluQXNwZWN0UmF0aW86ZmFsc2UsbGF5b3V0OntwYWRkaW5nOnt0b3A6MTZ9fSxwbHVnaW5zOntsZWdlbmQ6e2Rpc3BsYXk6ZmFsc2V9LGRhdGFsYWJlbHM6e30sdG9vbHRpcDp7Y2FsbGJhY2tzOntsYWJlbDpjdHg9Pntjb25zdCB0PWN0eC5kYXRhc2V0LmRhdGEucmVkdWNlKChhLGIpPT5hK2IsMCk7Y29uc3QgcGN0PXQ+MD9NYXRoLnJvdW5kKGN0eC5wYXJzZWQueS90KjEwMCk6MDtyZXR1cm5gICR7Y3R4LmRhdGFzZXQubGFiZWx9OiAke2N0eC5wYXJzZWQueX0gKCR7cGN0fSUgZGUgZXN0YSBwZXJzb25hKWB9LGZvb3RlcjppdGVtcz0+J1RvdGFsIHNwcmludDogJytpdGVtcy5yZWR1Y2UoKHMsaSk9PnMraS5wYXJzZWQueSwwKX19fSxzY2FsZXM6e3g6e3N0YWNrZWQ6dHJ1ZSx0aWNrczp7YXV0b1NraXA6ZmFsc2UsbWF4Um90YXRpb246MzUsZm9udDp7c2l6ZToxMH19LGdyaWQ6e2Rpc3BsYXk6ZmFsc2V9fSx5OntzdGFja2VkOnRydWUsYmVnaW5BdFplcm86dHJ1ZSx0aWNrczp7c3RlcFNpemU6NSxmb250OntzaXplOjExfX0sZ3JpZDp7Y29sb3I6J3JnYmEoMCwwLDAsMC4wNiknfX19fX0pOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdlcS1sZWdlbmQnKS5pbm5lckhUTUw9c29ydGVkLm1hcCgoW2xhYmVsLHtjb2xvcn1dKT0+YDxzcGFuPjxzcGFuIGNsYXNzPSJsc3EiIHN0eWxlPSJiYWNrZ3JvdW5kOiR7Y29sb3J9Ij48L3NwYW4+JHtsYWJlbH08L3NwYW4+YCkuam9pbignJyk7Cn0KCmZ1bmN0aW9uIGZpbHRlckVxKGJ0bixwZXJzb25hKXsKICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcjZXEtZmlsdGVycyAuZmJ0bicpLmZvckVhY2goYj0+Yi5jbGFzc0xpc3QucmVtb3ZlKCdhY3RpdmUnKSk7CiAgYnRuLmNsYXNzTGlzdC5hZGQoJ2FjdGl2ZScpOwogIGN1cnJlbnRQZXJzb25hPXBlcnNvbmE7CiAgYnVpbGRFcUNoYXJ0KHBlcnNvbmEpOwogIGNvbnN0IHJvd3M9cGVyc29uYT09PSdhbGwnP09iamVjdC52YWx1ZXMoZXFEYXRhLmFsbCk6T2JqZWN0LnZhbHVlcyhlcURhdGFbcGVyc29uYV18fHt9KTsKICBjb25zdCB0b3RhbD1yb3dzLnJlZHVjZSgocyx7dmFsc30pPT5zK3ZhbHMucmVkdWNlKChhLGIpPT5hK2IsMCksMCk7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2VxLWJhZGdlJykudGV4dENvbnRlbnQ9dG90YWwrJyByZWdpc3Ryb3MnOwp9Cjwvc2NyaXB0Pgo8L2JvZHk+CjwvaHRtbD4K</script>
 
 
 </body></html>
