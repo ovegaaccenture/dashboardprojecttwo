@@ -14,6 +14,8 @@ header h1{font-size:17px;font-weight:500}
 .upload-btn{border:0.5px solid #ccc;border-radius:6px;padding:6px 14px;font-size:12px;color:#555;cursor:pointer;transition:all 0.2s;background:#fff}
 .upload-btn:hover{border-color:#185FA5;color:#185FA5;background:#f0f6ff}
 .upload-btn.loaded{border-color:#3B6D11;color:#3B6D11;background:#f0f7e8}
+.export-btn{border:0.5px solid #3B6D11;border-radius:6px;padding:6px 14px;font-size:12px;color:#3B6D11;cursor:pointer;background:#f0f7e8;font-weight:600;display:none}
+.export-btn:hover{background:#d8f0c4}
 .upload-btn input{display:none}
 nav{width:220px;flex-shrink:0;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;padding:1.5rem 1rem;border-right:0.5px solid #e0e0dc;background:#fff}
 nav h2{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#aaa;margin-bottom:0.75rem;padding-left:8px}
@@ -81,6 +83,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:#bbb;border-top:0.5
       📂 Cargar Excel
       <input type="file" accept=".xlsx,.xls" onchange="loadFile(this)">
     </label>
+    <button class="export-btn" id="exportBtn" onclick="exportSnapshot()" style="display: inline-block;">⬇ Exportar snapshot</button>
   </div>
 </header>
 
@@ -285,6 +288,7 @@ const COLORS={'Accepted':'#639922','Discarded':'#E24B4A','In Progress':'#EF9F27'
 const PERSON_COLORS=['#185FA5','#1D9E75','#EF9F27','#7F77DD','#D85A30','#639922'];
 
 let charts={}, prevData=null, eqData={}, eqSprints=[], currentPersona='all';
+let snapshotData=null; // se llena al cargar un Excel; usado por exportSnapshot()
 
 function scrollTo(id){
   document.getElementById(id).scrollIntoView({behavior:'smooth'});
@@ -410,6 +414,7 @@ function loadFile(input){
     document.getElementById('header-upload-label').classList.add('loaded');
     document.getElementById('file-name').textContent=file.name;
     setupNavObserver();
+    document.getElementById('exportBtn').style.display='inline-block';
   };
   reader.readAsArrayBuffer(file);
 }
@@ -543,6 +548,20 @@ function processData(wb,fileName){
   const dOpts={responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:false},datalabels:{anchor:'end',align:'end',color:'rgba(100,100,100,0.8)',font:{size:11,weight:'500'},formatter:v=>v>0?v:''}},scales:{x:{ticks:{autoSkip:false,maxRotation:35,font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:5,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}};
   destroyChart('ca');charts['ca']=new Chart(document.getElementById('ca'),{type:'bar',data:{labels:dlabels,datasets:[{data:adVals,backgroundColor:adVals.map(v=>`rgba(24,95,165,${(0.3+0.7*(v/maxA)).toFixed(2)})`),borderRadius:4,borderSkipped:false}]},options:dOpts});
   destroyChart('cv');charts['cv']=new Chart(document.getElementById('cv'),{type:'bar',data:{labels:dlabels,datasets:[{data:vdVals,backgroundColor:vdVals.map(v=>v>0?`rgba(29,158,117,${(0.3+0.7*(v/maxV)).toFixed(2)})`:'rgba(0,0,0,0)'),borderRadius:4,borderSkipped:false}]},options:dOpts});
+
+  // Guardar todos los datos procesados para poder exportar un snapshot sin Excel
+  snapshotData = {
+    fileName,
+    sprints, sprintLabels,
+    curr,
+    nL, nG, nT, pL, pG,
+    genFiltered: genFiltered.map(r=>({sprint:r.sprint,estado:r.estado,resumen:r.resumen,persona:r.persona,hw:r.hw})),
+    psFiltered: psFiltered.map(r=>({sprint:r.sprint,estado:r.estado,resumen:r.resumen,persona:r.persona,hw:r.hw})),
+    localPersonas,
+    eqDataSerialized: JSON.parse(JSON.stringify(eqData)),
+    dlabels, adVals, vdVals,
+    localTeamArray: [...localTeam]
+  };
 }
 
 function buildEqChart(persona){
@@ -559,6 +578,121 @@ function buildEqChart(persona){
   const datasets=sorted.map(([label,{vals,data,color}])=>{const d2=vals||data;return{label,data:d2,backgroundColor:color,borderRadius:3,borderSkipped:false,datalabels:{display:ctx=>d2[ctx.dataIndex]>0,color:'#fff',font:{size:10,weight:'500'},formatter:v=>v}};});
   charts['c4']=new Chart(document.getElementById('c4'),{type:'bar',data:{labels:eqSprints,datasets},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:16}},plugins:{legend:{display:false},datalabels:{},tooltip:{callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);const pct=t>0?Math.round(ctx.parsed.y/t*100):0;return` ${ctx.dataset.label}: ${ctx.parsed.y} (${pct}% de esta persona)`},footer:items=>'Total sprint: '+items.reduce((s,i)=>s+i.parsed.y,0)}}},scales:{x:{stacked:true,ticks:{autoSkip:false,maxRotation:35,font:{size:10}},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{stepSize:5,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}}});
   document.getElementById('eq-legend').innerHTML=sorted.map(([label,{color}])=>`<span><span class="lsq" style="background:${color}"></span>${label}</span>`).join('');
+}
+
+function exportSnapshot(){
+  if(!snapshotData){ alert('Carga un Excel primero para poder exportar un snapshot.'); return; }
+  const snap = JSON.stringify(snapshotData);
+  const now = new Date();
+  const stamp = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const filename = `dashboard_sprints_snapshot_${stamp}.html`;
+
+  // Obtener el HTML actual e inyectar el bloque de datos y el auto-cargador
+  let html = document.documentElement.outerHTML;
+
+  // Inyectar script de auto-carga justo antes del cierre de </body>
+  const autoLoad = `
+<script>
+(function(){
+  const SNAP = ${snap};
+  window.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('upload-screen').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    document.getElementById('sidebar').style.display='block';
+    document.getElementById('exportBtn').style.display='inline-block';
+    document.getElementById('file-name').textContent = SNAP.fileName||'snapshot';
+    document.getElementById('header-upload-label').classList.add('loaded');
+    restoreFromSnapshot(SNAP);
+  });
+})();
+<\/script>`;
+
+  html = html.replace('</body>', autoLoad + '\n</body>');
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function restoreFromSnapshot(snap){
+  const {sprints,sprintLabels,curr,nL,nG,nT,pL,pG,genFiltered,psFiltered,localPersonas,eqDataSerialized,dlabels,adVals,vdVals,localTeamArray} = snap;
+  const localTeam = new Set((localTeamArray||[]).map(s=>s.toUpperCase()));
+
+  // Métricas
+  document.getElementById('dash-sub').textContent=`Registros con sprint asignado · snapshot · ${genFiltered.length} registros`;
+  document.getElementById('m-total').textContent=curr.total;
+  document.getElementById('m-accepted').textContent=curr.accepted;
+  document.getElementById('m-discarded').textContent=curr.discarded;
+  document.getElementById('m-blocked').textContent=curr.blocked;
+  document.getElementById('m-inprogress').textContent=curr.inprogress;
+  document.getElementById('m-rtv').textContent=curr.rtv;
+  document.getElementById('m-analysing').textContent=curr.analysing;
+  document.getElementById('m-other').textContent=curr.other;
+
+  // Equipo
+  document.getElementById('eq-total-badge').textContent=nT+' registros con sprint';
+  document.getElementById('t-local').textContent=nL;
+  document.getElementById('t-global').textContent=nG;
+  document.getElementById('t-local-pct').textContent=pL+'% del total';
+  document.getElementById('t-global-pct').textContent=(100-pL)+'% del total';
+  document.getElementById('bar-local').style.width=pL+'%';
+  document.getElementById('bar-global').style.width=(100-pL)+'%';
+  document.getElementById('bar-local-label').textContent='Local '+pL+'%';
+  document.getElementById('bar-global-label').textContent='Global '+(100-pL)+'%';
+  document.getElementById('bar-local-n').textContent=nL+' tareas';
+  document.getElementById('bar-global-n').textContent=nG+' tareas';
+
+  function mk(id,data,options){destroyChart(id);charts[id]=new Chart(document.getElementById(id),{data,options});}
+
+  // Estatus general
+  document.getElementById('c1b-count').textContent=genFiltered.length+' registros';
+  const egTotal=spVals2(genFiltered,sprints,null);
+  mk('c1b',{labels:sprintLabels,datasets:[barDs(sprints,egTotal),lineDs('Accepted',spVals2(genFiltered,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals2(genFiltered,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals2(genFiltered,sprints,'In Progress'),'#EF9F27',[4,4]),lineDs('Blocked',spVals2(genFiltered,sprints,'Blocked'),'#7F77DD',[2,3]),lineDs('Ready To Verify',spVals2(genFiltered,sprints,'Ready To Verify'),'#185FA5',[4,4]),lineDs('Analysing',spVals2(genFiltered,sprints,'Analysing'),'#1D9E75',[2,3])]},opts(5));
+
+  const gapEg=sprints.map(sp=>genFiltered.filter(r=>r.sprint===sp&&['Accepted','Ready To Verify','Discarded'].includes(r.estado)).length);
+  buildGap('cgap_general','pct-general','cgap-general-count',sprints,egTotal,gapEg);
+
+  document.getElementById('c1-count').textContent=psFiltered.length+' registros';
+  const psTotal2=spVals2(psFiltered,sprints,null);
+  mk('c1',{labels:sprintLabels,datasets:[barDs(sprints,psTotal2),lineDs('Accepted',spVals2(psFiltered,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals2(psFiltered,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals2(psFiltered,sprints,'In Progress'),'#EF9F27',[4,4]),lineDs('Blocked',spVals2(psFiltered,sprints,'Blocked'),'#7F77DD',[2,3])]},opts(5));
+
+  const gapPs=sprints.map(sp=>psFiltered.filter(r=>r.sprint===sp&&['Accepted','Ready To Verify','Discarded'].includes(r.estado)).length);
+  buildGap('cgap_sprint','pct-sprint','cgap-sprint-count',sprints,psTotal2,gapPs);
+
+  const analRows=genFiltered.filter(r=>/an[aá]li[sz]is/i.test(r.resumen));
+  document.getElementById('c2-count').textContent=analRows.length+' registros';
+  mk('c2',{labels:sprintLabels,datasets:[barDs(sprints,spVals2(analRows,sprints,null)),lineDs('Accepted',spVals2(analRows,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals2(analRows,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('Ready To Verify',spVals2(analRows,sprints,'Ready To Verify'),'#185FA5',[4,4]),lineDs('In Progress',spVals2(analRows,sprints,'In Progress'),'#EF9F27',[2,4]),lineDs('Analysing',spVals2(analRows,sprints,'Analysing'),'#7F77DD',[2,3])]},opts(3));
+
+  const valRows=genFiltered.filter(r=>/validaci[oó]n/i.test(r.resumen));
+  document.getElementById('c3-count').textContent=valRows.length+' registros';
+  mk('c3',{labels:sprintLabels,datasets:[barDs(sprints,spVals2(valRows,sprints,null)),lineDs('Accepted',spVals2(valRows,sprints,'Accepted'),'#639922'),lineDs('Discarded',spVals2(valRows,sprints,'Discarded'),'#E24B4A',[6,3]),lineDs('In Progress',spVals2(valRows,sprints,'In Progress'),'#EF9F27',[2,4]),lineDs('Blocked',spVals2(valRows,sprints,'Blocked'),'#7F77DD',[4,4]),lineDs('Analysing',spVals2(valRows,sprints,'Analysing'),'#185FA5',[2,3])]},opts(2));
+
+  // Equipo local
+  eqSprints = sprintLabels;
+  eqData = eqDataSerialized;
+  document.getElementById('eq-badge').textContent=(nL)+' registros';
+  const filterDiv=document.getElementById('eq-filters');
+  filterDiv.innerHTML=`<button class="fbtn active" onclick="filterEq(this,'all')">Todos</button>`+
+    (localPersonas||[]).map(p=>`<button class="fbtn" onclick="filterEq(this,'${p}')">${p.split(' ').slice(0,2).join(' ')}</button>`).join('');
+  buildEqChart('all');
+
+  // Delay
+  const maxHw=dlabels.length;
+  const maxA=Math.max(...adVals,1),maxV=Math.max(...vdVals,1);
+  document.getElementById('ca-count').textContent=adVals.reduce((a,b)=>a+b,0)+' tareas con retraso';
+  document.getElementById('cv-count').textContent=vdVals.reduce((a,b)=>a+b,0)+' tareas con retraso';
+  const dOpts={responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:false},datalabels:{anchor:'end',align:'end',color:'rgba(100,100,100,0.8)',font:{size:11,weight:'500'},formatter:v=>v>0?v:''}},scales:{x:{ticks:{autoSkip:false,maxRotation:35,font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:5,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}};
+  destroyChart('ca');charts['ca']=new Chart(document.getElementById('ca'),{type:'bar',data:{labels:dlabels,datasets:[{data:adVals,backgroundColor:adVals.map(v=>`rgba(24,95,165,${(0.3+0.7*(v/maxA)).toFixed(2)})`),borderRadius:4,borderSkipped:false}]},options:dOpts});
+  destroyChart('cv');charts['cv']=new Chart(document.getElementById('cv'),{type:'bar',data:{labels:dlabels,datasets:[{data:vdVals,backgroundColor:vdVals.map(v=>v>0?`rgba(29,158,117,${(0.3+0.7*(v/maxV)).toFixed(2)})`:'rgba(0,0,0,0)'),borderRadius:4,borderSkipped:false}]},options:dOpts});
+
+  setupNavObserver();
+}
+
+// Versión de spVals que acepta estado=null para contar todos los registros del sprint
+function spVals2(rows,spList,estado){
+  return spList.map(sp=>rows.filter(r=>r.sprint===sp&&(estado===null||r.estado===estado)).length);
 }
 
 function filterEq(btn,persona){
