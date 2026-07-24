@@ -49,7 +49,7 @@ header span{font-size:12px;color:#888;margin-left:auto}
 
 <nav id="sidebar">
   <h2>GloMo MX</h2>
-  <a href="#sec-metrics" class="active">📊 Métricas Generales</a>
+  <a href="#sec-metrics" class="">📊 Métricas Generales</a>
   <a href="#sec-equipo" class="">👥 Distribución Equipo</a>
   <div class="sep"></div>
   <a href="#sec-gen-estatus" class="">📈 Estatus General</a>
@@ -64,7 +64,7 @@ header span{font-size:12px;color:#888;margin-left:auto}
   <a href="#sec-local-sprint" class="">🧑‍💻 Equipo Local</a>
   <div class="sep"></div>
   <a href="#sec-hw-analisis" class="">⏱ Retraso Análisis</a>
-  <a href="#sec-hw-validacion" class="">⏱ Retraso Validación</a>
+  <a href="#sec-hw-validacion" class="active">⏱ Retraso Validación</a>
 </nav>
 
 <div id="main">
@@ -145,12 +145,12 @@ header span{font-size:12px;color:#888;margin-left:auto}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
   <div class="section" id="sec-hw-analisis" style="margin-bottom:0">
     <div class="sec-header"><h2>Retraso Análisis</h2></div>
-    <p class="sub">Distribución de homework delay (días) — análisis</p>
+    <p class="sub">Distribución de homework delay (sprints) — análisis</p>
     <div class="chart-wrap" style="height:240px"><canvas id="hwAnChart" width="768" height="240" style="display: block; box-sizing: border-box; height: 240px; width: 768px;"></canvas></div>
   </div>
   <div class="section" id="sec-hw-validacion" style="margin-bottom:0">
     <div class="sec-header"><h2>Retraso Validación</h2></div>
-    <p class="sub">Distribución de homework delay (días) — validación</p>
+    <p class="sub">Distribución de homework delay (sprints) — validación</p>
     <div class="chart-wrap" style="height:240px"><canvas id="hwValChart" width="768" height="240" style="display: block; box-sizing: border-box; height: 240px; width: 768px;"></canvas></div>
   </div>
 </div>
@@ -426,25 +426,29 @@ function buildLocalChart(person){
 })();
 
 // ── 10/11. Homework delay ──────────────────────────────────────────────────────
-function buildHwChart(id,hw){
-  const keys=Object.keys(hw).map(Number).sort((a,b)=>a-b);
+function buildHwChart(id, hw){
+  const keys = Object.keys(hw).map(Number).sort((a,b)=>a-b);
+  const labels = keys.map(k => k===1 ? '1 sprint' : k+' sprints');
   new Chart(document.getElementById(id),{
     plugins:[DL],
     type:'bar',
-    data:{labels:keys.map(k=>k+' día'+(k>1?'s':'')),
-      datasets:[{data:keys.map(k=>hw[k]),
-        backgroundColor:keys.map(k=>k<=2?'#1D9E75':k<=4?'#EF9F27':'#E24B4A'),
-        borderWidth:0,borderRadius:4,
-        datalabels:{display:true,anchor:'end',align:'top',font:{size:11,weight:'600'},color:'#333',formatter:v=>v}
-      }]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},datalabels:{display:true}},
-      scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11}}},
-              y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:10}},beginAtZero:true}}}
+    data:{labels, datasets:[{
+      data: keys.map(k=>hw[String(k)]),
+      backgroundColor: keys.map(k=>k<=2?'#1D9E75':k<=4?'#EF9F27':'#E24B4A'),
+      borderWidth:0, borderRadius:4,
+      datalabels:{anchor:'end', align:'top', font:{size:11,weight:'600'}, color:'#333', formatter:v=>v>0?v:null}
+    }]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, datalabels:{display:true}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{size:11}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:10}}, beginAtZero:true}
+      }
+    }
   });
 }
-buildHwChart('hwAnChart',D.hwAnalisis);
-buildHwChart('hwValChart',D.hwValidacion);
+buildHwChart('hwAnChart',  D.hwAnalisis);
+buildHwChart('hwValChart', D.hwValidacion);
 
 // ── Active nav ─────────────────────────────────────────────────────────────────
 const obs=new IntersectionObserver(entries=>{
