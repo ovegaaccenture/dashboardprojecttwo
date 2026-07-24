@@ -1,0 +1,1017 @@
+<html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GloMo MX — Dashboard de Tagging</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --blue: #004B8D; --blue-mid: #2a78d6;
+    --gray-50: #F7F9FC; --gray-100: #EEF2F7; --gray-300: #CBD5E1;
+    --gray-500: #64748B; --gray-700: #334155; --gray-900: #0F172A;
+    --radius: 12px; --shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 14px rgba(0,0,0,.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--gray-50); color: var(--gray-900); }
+
+  header { background: var(--blue); color: #fff; padding: 18px 32px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2); display: flex; justify-content: space-between; align-items: center; }
+  header h1 { font-size: 1.1rem; font-weight: 700; }
+  header span { font-size: .72rem; opacity: .65; }
+
+  .filter-bar { background: #fff; border-bottom: 1px solid var(--gray-100); padding: 14px 32px;
+    display: flex; align-items: center; gap: 12px; position: sticky; top: 58px; z-index: 90; }
+  .filter-bar .label { font-size: .78rem; font-weight: 600; color: var(--gray-500); margin-right: 6px; }
+  .filter-bar .hint { margin-left: auto; font-size: .68rem; color: var(--gray-500); }
+  .team-btn { padding: 7px 18px; border-radius: var(--radius); border: 1.5px solid var(--gray-300);
+    background: transparent; color: var(--gray-700); font-size: .82rem; font-weight: 600; cursor: pointer; }
+  .team-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  main { padding: 28px 32px; max-width: 1320px; margin: auto; }
+  section { margin-bottom: 28px; }
+  .section-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--gray-500); margin-bottom: 12px; }
+
+  .source-tag { display: inline-block; font-size: .64rem; font-weight: 600; color: #075985;
+    background: #E0F2FE; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+  .no-filter-tag { display: inline-block; font-size: .64rem; font-weight: 600; color: #92400E;
+    background: #FEF3C7; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+
+  .card-box { background: #fff; border: 1px solid var(--gray-100); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow); }
+  .card-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; display: inline-block; }
+  .card-box .subtitle { font-size: .72rem; color: var(--gray-500); margin-bottom: 14px; }
+
+  .totals-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .total-card { background: #fff; border: 1px solid var(--gray-100); border-radius: var(--radius);
+    padding: 22px; text-align: center; box-shadow: var(--shadow); }
+  .total-card .t-label { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--gray-500); margin-bottom: 6px; }
+  .total-card .t-value { font-size: 2.6rem; font-weight: 800; color: var(--gray-900); line-height: 1; }
+  .total-card .t-sub { font-size: .72rem; color: var(--gray-500); margin-top: 4px; }
+
+  .estado-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .e-card { border-radius: 10px; padding: 14px 10px; text-align: center; }
+  .e-label { font-size: .68rem; font-weight: 700; letter-spacing: .03em; }
+  .e-count { font-size: 1.6rem; font-weight: 800; line-height: 1; margin: 2px 0; }
+  .e-pct { font-size: .68rem; opacity: .75; }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; font-size: .72rem; color: var(--gray-500); }
+  .legend-row span { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+  .person-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .person-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--gray-300);
+    background: transparent; color: var(--gray-500); font-size: .74rem; cursor: pointer; }
+  .person-btn.active { border-color: var(--gray-900); color: var(--gray-900); font-weight: 600; }
+
+  .chart-wrap { position: relative; width: 100%; }
+
+  .gap-mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 6px; margin-bottom: 10px; }
+  .gap-cell { border-radius: 8px; padding: 6px 4px; text-align: center; }
+  .gap-cell .g-label { font-size: .62rem; }
+  .gap-cell .g-pct { font-size: .88rem; font-weight: 700; }
+  .gap-cell .g-frac { font-size: .58rem; opacity: .7; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  footer { text-align: center; padding: 20px; font-size: .7rem; color: var(--gray-500);
+    border-top: 1px solid var(--gray-100); margin-top: 10px; }
+
+
+  .upload-bar { background: #fff; border-bottom: 1px solid var(--gray-100); padding: 10px 32px;
+    display: flex; align-items: center; gap: 14px; position: sticky; top: 106px; z-index: 85; }
+  .upload-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px;
+    border-radius: var(--radius); border: 1.5px solid var(--blue-mid); color: var(--blue-mid);
+    font-size: .78rem; font-weight: 600; cursor: pointer; background: transparent; }
+  .upload-btn:hover { background: #E6F1FB; }
+  .upload-btn input[type="file"] { display: none; }
+  .upload-status { font-size: .74rem; color: var(--gray-500); }
+  .upload-status.error { color: #991B1B; font-weight: 600; }
+  .upload-status.success { color: #065F46; font-weight: 600; }
+
+  @media (max-width: 780px) {
+    .totals-row, .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div><h1>GloMo MX — Dashboard de tagging</h1></div>
+  <span>Actualización cada 15 días</span>
+</header>
+
+<div class="filter-bar">
+  <span class="label">Equipo</span>
+  <button class="team-btn" data-team="all" onclick="setGlobalTeam('all', this)">Todos</button>
+  <button class="team-btn active" data-team="local" onclick="setGlobalTeam('local', this)">Local</button>
+  <button class="team-btn" data-team="global" onclick="setGlobalTeam('global', this)">Global</button>
+  <span class="hint" id="teamFilterHint">Aplica a todo el dashboard excepto "Equipo local por persona"</span>
+</div>
+
+<div class="upload-bar">
+  <label class="upload-btn" for="fileInput">
+    <span>Cargar nuevo Excel</span>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+  </label>
+  <span id="uploadStatus" class="upload-status success">Cargado: ArchivoBaseDatos.xlsx · 24 jul 2026 03:30 p.m. · 289 tareas (990 filas vacías/formato ignoradas)</span>
+</div>
+
+<main>
+
+  <section>
+    <div class="totals-row">
+      <div class="total-card">
+        <div class="t-label">Tareas con sprint</div>
+        <div class="t-value" id="kSprintTotal">177</div>
+        <div class="t-sub">Sprint asignado</div>
+      </div>
+      <div class="total-card">
+        <div class="t-label">Tareas totales</div>
+        <div class="t-value" id="kAllTotal">205</div>
+        <div class="t-sub">Todas las tareas</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">Distribución por estado <span class="source-tag">estatus general</span></div>
+    <div class="estado-grid" id="estadoCards"><div class="e-card" style="background: rgb(209, 250, 229);"><div class="e-label" style="color:#065F46">Accepted</div><div class="e-count" style="color:#065F46">144</div><div class="e-pct" style="color:#065F46">70.2%</div></div><div class="e-card" style="background: rgb(254, 226, 226);"><div class="e-label" style="color:#991B1B">Discarded</div><div class="e-count" style="color:#991B1B">22</div><div class="e-pct" style="color:#991B1B">10.7%</div></div><div class="e-card" style="background: rgb(237, 233, 254);"><div class="e-label" style="color:#4C1D95">New</div><div class="e-count" style="color:#4C1D95">11</div><div class="e-pct" style="color:#4C1D95">5.4%</div></div><div class="e-card" style="background: rgb(254, 226, 226);"><div class="e-label" style="color:#7F1D1D">Blocked</div><div class="e-count" style="color:#7F1D1D">9</div><div class="e-pct" style="color:#7F1D1D">4.4%</div></div><div class="e-card" style="background: rgb(224, 242, 254);"><div class="e-label" style="color:#075985">Ready To Verify</div><div class="e-count" style="color:#075985">5</div><div class="e-pct" style="color:#075985">2.4%</div></div><div class="e-card" style="background: rgb(254, 243, 199);"><div class="e-label" style="color:#92400E">Analysing</div><div class="e-count" style="color:#92400E">4</div><div class="e-pct" style="color:#92400E">2.0%</div></div><div class="e-card" style="background: rgb(255, 237, 213);"><div class="e-label" style="color:#9A3412">In Progress</div><div class="e-count" style="color:#9A3412">2</div><div class="e-pct" style="color:#9A3412">1.0%</div></div><div class="e-card" style="background: rgb(236, 253, 245);"><div class="e-label" style="color:#065F46">Ready</div><div class="e-count" style="color:#065F46">1</div><div class="e-pct" style="color:#065F46">0.5%</div></div><div class="e-card" style="background: rgb(243, 232, 255);"><div class="e-label" style="color:#6B21A8">Test</div><div class="e-count" style="color:#6B21A8">2</div><div class="e-pct" style="color:#6B21A8">1.0%</div></div><div class="e-card" style="background: rgb(219, 234, 254);"><div class="e-label" style="color:#1E40AF">Deployed</div><div class="e-count" style="color:#1E40AF">1</div><div class="e-pct" style="color:#1E40AF">0.5%</div></div><div class="e-card" style="background: rgb(255, 247, 237);"><div class="e-label" style="color:#9A3412">To Rework</div><div class="e-count" style="color:#9A3412">4</div><div class="e-pct" style="color:#9A3412">2.0%</div></div></div>
+  </section>
+
+  <section>
+    <div class="card-box">
+      <h3>Distribución por equipo</h3><span class="source-tag">estatus general</span><span class="no-filter-tag">no usa el filtro de equipo</span>
+      <div class="subtitle">Reparto de las 273 tareas entre equipo Local y Global</div>
+      <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+        <div class="chart-wrap" style="height:220px;width:220px;flex-shrink:0;">
+          <canvas id="chartTeamDist" role="img" aria-label="Gráfica de dona mostrando la distribución de tareas entre equipo Local y Global" style="box-sizing: border-box; display: block; height: 220px; width: 220px;" width="220" height="220"></canvas>
+        </div>
+        <div class="legend-row" id="legendTeamDist" style="flex-direction:column;gap:8px;font-size:.82rem;"><span><span class="dot" style="background:#2a78d6"></span>Local — 205 (71%)</span><span><span class="dot" style="background:#1baf7a"></span>Global — 83 (29%)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card-box">
+      <h3>Estatus general</h3><span class="source-tag">estatus general</span>
+      <div class="subtitle">Barras Local/Global + evolución por estado</div>
+      <div class="legend-row" id="legendEstatusGeneral"><span><span class="dot" style="background:rgba(127,168,217,0.8)"></span>Local</span><span><span class="dot" style="background:#0ca30c"></span>Accepted</span><span><span class="dot" style="background:#e34948"></span>Discarded</span><span><span class="dot" style="background:#4a3aa7"></span>New</span><span><span class="dot" style="background:#d03b3b"></span>Blocked</span><span><span class="dot" style="background:#1baf7a"></span>Ready To Verify</span><span><span class="dot" style="background:#eb6834"></span>In Progress</span><span><span class="dot" style="background:#008300"></span>Ready</span><span><span class="dot" style="background:#e87ba4"></span>Test</span><span><span class="dot" style="background:#898781"></span>Deployed</span><span><span class="dot" style="background:#c3c2b7"></span>To Rework</span></div>
+      <div class="chart-wrap" style="height: 380px;">
+        <canvas id="chartEstatusGeneral" role="img" aria-label="Gráfica combinada de barras apiladas por equipo y líneas de evolución por estado, para todos los sprints" style="box-sizing: border-box; display: block; height: 380px; width: 1214px;" width="1214" height="380"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card-box">
+      <h3>GAP general</h3><span class="source-tag">estatus general</span>
+      <div class="subtitle">Accepted + Discarded + Ready to verify, % sobre total por sprint</div>
+      <div class="gap-mini" id="gapMiniCards"><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 1</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">7/7</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 2</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">9/9</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 3</div><div class="g-pct" style="color:#065F46">87.5%</div><div class="g-frac" style="color:#065F46">7/8</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 4</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">14/14</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 5</div><div class="g-pct" style="color:#065F46">91.7%</div><div class="g-frac" style="color:#065F46">11/12</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 6</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">13/13</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 1</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">9/9</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 2</div><div class="g-pct" style="color:#065F46">90.9%</div><div class="g-frac" style="color:#065F46">10/11</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 3</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">11/11</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 4</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">11/11</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 5</div><div class="g-pct" style="color:#065F46">86.7%</div><div class="g-frac" style="color:#065F46">13/15</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 6+St</div><div class="g-pct" style="color:#065F46">88.9%</div><div class="g-frac" style="color:#065F46">24/27</div></div><div class="gap-cell" style="background: rgb(254, 226, 226);"><div class="g-label" style="color:#7F1D1D">Q3 Sprint 1</div><div class="g-pct" style="color:#7F1D1D">43.8%</div><div class="g-frac" style="color:#7F1D1D">7/16</div></div><div class="gap-cell" style="background: rgb(254, 243, 199);"><div class="g-label" style="color:#92400E">Q3 Sprint 2</div><div class="g-pct" style="color:#92400E">50%</div><div class="g-frac" style="color:#92400E">7/14</div></div></div>
+      <div style="display:flex; gap:12px; margin-bottom:16px; font-size:.62rem; color:var(--gray-500);">
+        <span style="display:flex;align-items:center;gap:3px;"><span class="dot" style="background:#D1FAE5;border:1px solid #A7E8C9;"></span>≥ 80%</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span class="dot" style="background:#FEF3C7;border:1px solid #FDE68A;"></span>50–79%</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span class="dot" style="background:#FEE2E2;border:1px solid #FCA5A5;"></span>&lt; 50%</span>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--gray-100);margin:0 0 16px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:.72rem;color:var(--gray-500);">
+        <span class="dot" style="background:rgba(42,120,214,.7);"></span>
+        Total = Accepted + Discarded + Ready to verify
+      </div>
+      <div class="chart-wrap" style="height: 300px;">
+        <canvas id="chartGap" role="img" aria-label="Gráfica de barras del total de tareas Accepted, Discarded y Ready to verify por sprint" style="box-sizing: border-box; display: block; height: 300px; width: 1214px;" width="1214" height="300"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card-box">
+      <h3>Estatus general por sprint</h3><span class="source-tag">estatus por sprint</span>
+      <div class="subtitle">Barras Local/Global + evolución por estado</div>
+      <div class="legend-row" id="legendEstatusGeneralSprint"><span><span class="dot" style="background:rgba(127,168,217,0.8)"></span>Local</span><span><span class="dot" style="background:#0ca30c"></span>Accepted</span><span><span class="dot" style="background:#e34948"></span>Discarded</span><span><span class="dot" style="background:#4a3aa7"></span>New</span><span><span class="dot" style="background:#d03b3b"></span>Blocked</span><span><span class="dot" style="background:#1baf7a"></span>Ready To Verify</span><span><span class="dot" style="background:#eda100"></span>Analysing</span><span><span class="dot" style="background:#eb6834"></span>In Progress</span><span><span class="dot" style="background:#008300"></span>Ready</span><span><span class="dot" style="background:#e87ba4"></span>Test</span><span><span class="dot" style="background:#898781"></span>Deployed</span><span><span class="dot" style="background:#c3c2b7"></span>To Rework</span></div>
+      <div class="chart-wrap" style="height: 380px;">
+        <canvas id="chartEstatusGeneralSprint" role="img" aria-label="Gráfica combinada de barras apiladas por equipo y líneas de evolución por estado, desde la hoja estatus por sprint" style="box-sizing: border-box; display: block; height: 380px; width: 1214px;" width="1214" height="380"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card-box">
+      <h3>GAP por sprint</h3><span class="source-tag">estatus por sprint</span>
+      <div class="subtitle">Accepted + Discarded + Ready to verify, % sobre total por sprint</div>
+      <div class="gap-mini" id="gapMiniCardsSprint"><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 1</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">7/7</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 2</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">9/9</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 3</div><div class="g-pct" style="color:#065F46">87.5%</div><div class="g-frac" style="color:#065F46">7/8</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 4</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">14/14</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 5</div><div class="g-pct" style="color:#065F46">91.7%</div><div class="g-frac" style="color:#065F46">11/12</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q1 Sprint 6</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">13/13</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 1</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">9/9</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 2</div><div class="g-pct" style="color:#065F46">90.9%</div><div class="g-frac" style="color:#065F46">10/11</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 3</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">11/11</div></div><div class="gap-cell" style="background: rgb(209, 250, 229);"><div class="g-label" style="color:#065F46">Q2 Sprint 4</div><div class="g-pct" style="color:#065F46">100%</div><div class="g-frac" style="color:#065F46">11/11</div></div><div class="gap-cell" style="background: rgb(254, 243, 199);"><div class="g-label" style="color:#92400E">Q2 Sprint 5</div><div class="g-pct" style="color:#92400E">60%</div><div class="g-frac" style="color:#92400E">9/15</div></div><div class="gap-cell" style="background: rgb(254, 226, 226);"><div class="g-label" style="color:#7F1D1D">Q2 Sprint 6+St</div><div class="g-pct" style="color:#7F1D1D">48.1%</div><div class="g-frac" style="color:#7F1D1D">13/27</div></div><div class="gap-cell" style="background: rgb(254, 226, 226);"><div class="g-label" style="color:#7F1D1D">Q3 Sprint 1</div><div class="g-pct" style="color:#7F1D1D">25%</div><div class="g-frac" style="color:#7F1D1D">4/16</div></div><div class="gap-cell" style="background: rgb(254, 226, 226);"><div class="g-label" style="color:#7F1D1D">Q3 Sprint 2</div><div class="g-pct" style="color:#7F1D1D">41.7%</div><div class="g-frac" style="color:#7F1D1D">5/12</div></div></div>
+      <div style="display:flex; gap:12px; margin-bottom:16px; font-size:.62rem; color:var(--gray-500);">
+        <span style="display:flex;align-items:center;gap:3px;"><span class="dot" style="background:#D1FAE5;border:1px solid #A7E8C9;"></span>≥ 80%</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span class="dot" style="background:#FEF3C7;border:1px solid #FDE68A;"></span>50–79%</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span class="dot" style="background:#FEE2E2;border:1px solid #FCA5A5;"></span>&lt; 50%</span>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--gray-100);margin:0 0 16px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:.72rem;color:var(--gray-500);">
+        <span class="dot" style="background:rgba(42,120,214,.7);"></span>
+        Total = Accepted + Discarded + Ready to verify
+      </div>
+      <div class="chart-wrap" style="height: 300px;">
+        <canvas id="chartGapSprint" role="img" aria-label="Gráfica de barras del total de tareas Accepted, Discarded y Ready to verify por sprint, desde la hoja estatus por sprint" style="box-sizing: border-box; display: block; height: 300px; width: 1214px;" width="1214" height="300"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid2">
+      <div class="card-box">
+        <h3>Estatus general · Análisis</h3><span class="source-tag">estatus general</span>
+        <div class="subtitle" id="subAnalisis">106 tareas cuyo resumen contiene "análisis"</div>
+        <div class="chart-wrap" style="height: 340px;">
+          <canvas id="chartAnalisis" role="img" aria-label="Gráfica combinada de barras y líneas para tareas de análisis" style="box-sizing: border-box; display: block; height: 340px; width: 578px;" width="578" height="340"></canvas>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>Estatus general · Validación</h3><span class="source-tag">estatus general</span>
+        <div class="subtitle" id="subValidacion">62 tareas cuyo resumen contiene "validación"</div>
+        <div class="chart-wrap" style="height: 340px;">
+          <canvas id="chartValidacion" role="img" aria-label="Gráfica combinada de barras y líneas para tareas de validación" style="box-sizing: border-box; display: block; height: 340px; width: 578px;" width="578" height="340"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card-box">
+      <h3>Equipo local — estado por sprint</h3><span class="source-tag">estatus por sprint</span><span class="no-filter-tag">filtro por persona, no usa el filtro de equipo</span>
+      <div class="subtitle">
+        <span id="localRecordCount">8 registros</span>
+      </div>
+      <div class="person-btns" id="personBtns"><button class="person-btn">Todos</button><button class="person-btn">OSCAR JAVIER</button><button class="person-btn">JOSE CARLOS</button><button class="person-btn">CARLOS EDUARDO</button><button class="person-btn">JOHN ALEJANDRO</button><button class="person-btn active">ANDRES FELIPE</button></div>
+      <div class="legend-row" id="legendPerson"><span><span class="dot" style="background:#0ca30c"></span>Accepted</span><span><span class="dot" style="background:#4a3aa7"></span>New</span><span><span class="dot" style="background:#eb6834"></span>In Progress</span><span><span class="dot" style="background:#c3c2b7"></span>To Rework</span></div>
+      <div class="chart-wrap" style="height: 340px;">
+        <canvas id="chartPerson" role="img" aria-label="Gráfica de columnas apiladas por persona o por estado del equipo local" style="box-sizing: border-box; display: block; height: 340px; width: 1214px;" width="1214" height="340"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid2">
+      <div class="card-box">
+        <h3>Retraso de tareas · Análisis</h3><span class="source-tag">estatus general</span>
+        <div class="subtitle" id="subDelayAnalisis">Distribución de días de retraso · 106 tareas</div>
+        <div class="chart-wrap" style="height: 280px;">
+          <canvas id="chartDelayAnalisis" role="img" aria-label="Distribución de retraso en tareas de análisis" style="box-sizing: border-box; display: block; height: 280px; width: 578px;" width="578" height="280"></canvas>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>Retraso de tareas · Validación</h3><span class="source-tag">estatus general</span>
+        <div class="subtitle" id="subDelayValidacion">Distribución de días de retraso · 62 tareas</div>
+        <div class="chart-wrap" style="height: 280px;">
+          <canvas id="chartDelayValidacion" role="img" aria-label="Distribución de retraso en tareas de validación" style="box-sizing: border-box; display: block; height: 280px; width: 578px;" width="578" height="280"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Datos extraídos de ArchivoBaseDatos.xlsx · Actualización cada 15 días</footer>
+
+<script>
+let DATA = {"totals": {"all": {"total": 273, "withSprint": 247}, "local": {"total": 190, "withSprint": 172}, "global": {"total": 82, "withSprint": 74}}, "estados": {"all": {"Accepted": 180, "Discarded": 30, "New": 16, "Blocked": 12, "Ready To Verify": 9, "Analysing": 8, "In Progress": 6, "Ready": 5, "Test": 3, "Deployed": 3, "To Rework": 1}, "local": {"Accepted": 129, "Discarded": 21, "New": 12, "Blocked": 6, "Ready To Verify": 4, "Analysing": 5, "In Progress": 4, "Ready": 4, "Test": 3, "Deployed": 1, "To Rework": 1}, "global": {"Accepted": 51, "Discarded": 9, "New": 3, "Blocked": 6, "Ready To Verify": 5, "Analysing": 3, "In Progress": 2, "Ready": 1, "Test": 0, "Deployed": 2, "To Rework": 0}}, "estatusGeneral": {"all": {"sprintTeam": {"local": [7, 9, 8, 14, 12, 13, 9, 11, 11, 11, 15, 27, 15, 10], "global": [1, 4, 3, 4, 6, 6, 9, 5, 7, 7, 4, 8, 8, 2]}, "estadoBySprint": {"Accepted": [8, 11, 9, 17, 14, 14, 12, 11, 16, 13, 11, 18, 3, 0], "Discarded": [0, 1, 1, 1, 2, 5, 4, 3, 1, 4, 2, 3, 2, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 2, 9], "Blocked": [0, 1, 1, 0, 2, 0, 1, 0, 0, 0, 3, 2, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 4, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 3, 3], "In Progress": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 2, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0], "Deployed": [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]}, "gap": {"totals": [8, 12, 10, 18, 16, 19, 16, 14, 17, 17, 15, 24, 9, 0], "totalPerSprint": [8, 13, 11, 18, 18, 19, 18, 16, 18, 18, 19, 36, 23, 12], "pct": [100.0, 92.3, 90.9, 100.0, 88.9, 100.0, 88.9, 87.5, 94.4, 94.4, 78.9, 66.7, 39.1, 0.0]}}, "local": {"sprintTeam": {"local": [7, 9, 8, 14, 12, 13, 9, 11, 11, 11, 15, 27, 15, 10], "global": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "estadoBySprint": {"Accepted": [7, 8, 6, 13, 9, 11, 7, 9, 10, 8, 8, 13, 3, 0], "Discarded": [0, 1, 1, 1, 2, 2, 2, 1, 1, 3, 2, 3, 1, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 7], "Blocked": [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 2, 2, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0], "Deployed": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]}, "gap": {"totals": [7, 9, 7, 14, 11, 13, 9, 10, 11, 11, 12, 18, 4, 0], "totalPerSprint": [7, 9, 8, 14, 12, 13, 9, 11, 11, 11, 15, 27, 15, 10], "pct": [100.0, 100.0, 87.5, 100.0, 91.7, 100.0, 100.0, 90.9, 100.0, 100.0, 80.0, 66.7, 26.7, 0.0]}}, "global": {"sprintTeam": {"local": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "global": [1, 4, 3, 4, 6, 6, 9, 5, 7, 7, 4, 8, 8, 2]}, "estadoBySprint": {"Accepted": [1, 3, 3, 4, 5, 3, 5, 2, 6, 5, 3, 5, 0, 0], "Discarded": [0, 0, 0, 0, 0, 3, 2, 2, 0, 1, 0, 0, 1, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2], "Blocked": [0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0], "In Progress": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Deployed": [0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "gap": {"totals": [1, 3, 3, 4, 5, 6, 7, 4, 6, 6, 3, 6, 5, 0], "totalPerSprint": [1, 4, 3, 4, 6, 6, 9, 5, 7, 7, 4, 8, 8, 2], "pct": [100.0, 75.0, 100.0, 100.0, 83.3, 100.0, 77.8, 80.0, 85.7, 85.7, 75.0, 75.0, 62.5, 0.0]}}}, "analisis": {"all": {"local": [4, 3, 5, 5, 5, 11, 7, 8, 8, 7, 10, 17, 6, 7], "global": [0, 2, 0, 3, 3, 3, 6, 5, 7, 6, 2, 5, 1, 0], "estados": {"Accepted": [4, 4, 4, 7, 6, 11, 8, 8, 13, 9, 8, 11, 0, 0], "Discarded": [0, 1, 0, 1, 2, 3, 4, 3, 1, 4, 2, 2, 2, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 0, 5], "Blocked": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2], "In Progress": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 1, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "Deployed": [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]}, "count": 146}, "local": {"local": [4, 3, 5, 5, 5, 11, 7, 8, 8, 7, 10, 17, 6, 7], "global": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "estados": {"Accepted": [4, 2, 4, 4, 3, 9, 5, 6, 7, 4, 6, 8, 0, 0], "Discarded": [0, 1, 0, 1, 2, 2, 2, 1, 1, 3, 2, 2, 1, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 0, 5], "Blocked": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "Deployed": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]}, "count": 103}, "global": {"local": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "global": [0, 2, 0, 3, 3, 3, 6, 5, 7, 6, 2, 5, 1, 0], "estados": {"Accepted": [0, 2, 0, 3, 3, 2, 3, 2, 6, 5, 2, 3, 0, 0], "Discarded": [0, 0, 0, 0, 0, 1, 2, 2, 0, 1, 0, 0, 1, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Blocked": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "In Progress": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Deployed": [0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "count": 43}}, "validacion": {"all": {"local": [2, 5, 3, 8, 7, 2, 0, 2, 2, 4, 3, 10, 9, 3], "global": [1, 2, 2, 1, 3, 3, 2, 0, 1, 1, 2, 3, 3, 2], "estados": {"Accepted": [3, 6, 4, 9, 8, 3, 2, 2, 2, 4, 2, 8, 3, 0], "Discarded": [0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4], "Blocked": [0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 3, 1, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0], "Deployed": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "count": 87}, "local": {"local": [2, 5, 3, 8, 7, 2, 0, 2, 2, 4, 3, 10, 9, 3], "global": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "estados": {"Accepted": [2, 5, 2, 8, 6, 2, 0, 2, 2, 4, 1, 6, 3, 0], "Discarded": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2], "Blocked": [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 1, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0], "Deployed": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "count": 60}, "global": {"local": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "global": [1, 2, 2, 1, 3, 3, 2, 0, 1, 1, 2, 3, 3, 2], "estados": {"Accepted": [1, 1, 2, 1, 2, 1, 2, 0, 0, 0, 1, 2, 0, 0], "Discarded": [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2], "Blocked": [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Deployed": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "count": 26}}, "delayAnalisis": {"all": {"labels": ["1 sprint", "2 sprints", "3 sprints", "4 sprints", "5 sprints", "6 sprints", "7 sprints", "8 sprints"], "values": [45, 52, 27, 12, 5, 3, 1, 1], "n": 146}, "local": {"labels": ["1 sprint", "2 sprints", "3 sprints", "4 sprints", "5 sprints", "6 sprints", "7 sprints", "8 sprints"], "values": [33, 36, 17, 9, 4, 2, 1, 1], "n": 103}, "global": {"labels": ["1 sprint", "2 sprints", "3 sprints", "4 sprints", "5 sprints", "6 sprints"], "values": [12, 16, 10, 3, 1, 1], "n": 43}}, "delayValidacion": {"all": {"labels": ["1 sprint", "2 sprints", "3 sprints", "4 sprints", "5 sprints", "6 sprints", "7 sprints"], "values": [52, 18, 11, 2, 1, 1, 2], "n": 87}, "local": {"labels": ["1 sprint", "2 sprints", "3 sprints", "4 sprints", "7 sprints"], "values": [42, 8, 7, 1, 2], "n": 60}, "global": {"labels": ["1 sprint", "2 sprints", "3 sprints", "4 sprints", "5 sprints", "6 sprints"], "values": [9, 10, 4, 1, 1, 1], "n": 26}}, "localPeople": {"names": ["OSCAR JAVIER VEGA BELLO", "JOSE CARLOS SILVA SILVA", "CARLOS EDUARDO MANZANO VELAZQUEZ", "JOHN ALEJANDRO ALFONSO NIÑO", "ANDRES FELIPE DEOSSA SALAVERRIA"], "totals": {"OSCAR JAVIER VEGA BELLO": [4, 9, 6, 13, 9, 13, 8, 8, 8, 6, 10, 15, 4, 4], "JOSE CARLOS SILVA SILVA": [0, 0, 0, 0, 0, 0, 1, 3, 1, 4, 2, 0, 0, 0], "CARLOS EDUARDO MANZANO VELAZQUEZ": [0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 3, 3, 6, 3], "JOHN ALEJANDRO ALFONSO NIÑO": [3, 0, 2, 1, 3, 0, 0, 0, 0, 0, 0, 5, 2, 2], "ANDRES FELIPE DEOSSA SALAVERRIA": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 1]}, "estados": {"OSCAR JAVIER VEGA BELLO": {"Accepted": [4, 8, 4, 12, 7, 11, 6, 7, 7, 4, 3, 9, 0, 0], "Discarded": [0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 0, 2, 1, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 0, 2], "Blocked": [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 2, 1, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 1], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0]}, "JOSE CARLOS SILVA SILVA": {"Accepted": [0, 0, 0, 0, 0, 0, 1, 2, 1, 3, 0, 0, 0, 0], "Discarded": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0], "Deployed": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]}, "CARLOS EDUARDO MANZANO VELAZQUEZ": {"Accepted": [0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 3, 0], "Discarded": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "Blocked": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]}, "JOHN ALEJANDRO ALFONSO NIÑO": {"Accepted": [3, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Discarded": [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], "Blocked": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]}, "ANDRES FELIPE DEOSSA SALAVERRIA": {"Accepted": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0]}}}, "localTotal": 172, "sprintOrder": ["Q1   Sprint 1", "Q1   Sprint 2", "Q1   Sprint 3", "Q1   Sprint 4", "Q1   Sprint 5", "Q1   Sprint 6", "Q2   Sprint 1", "Q2   Sprint 2", "Q2   Sprint 3", "Q2   Sprint 4", "Q2   Sprint 5", "Q2   Sprint 6+St", "Q3   Sprint 1", "Q3   Sprint 2"], "sprintLabels": ["Q1 S1", "Q1 S2", "Q1 S3", "Q1 S4", "Q1 S5", "Q1 S6", "Q2 S1", "Q2 S2", "Q2 S3", "Q2 S4", "Q2 S5", "Q2 S6+St", "Q3 S1", "Q3 S2"], "estadosList": ["Accepted", "Discarded", "New", "Blocked", "Ready To Verify", "Analysing", "In Progress", "Ready", "Test", "Deployed", "To Rework"], "estatusGeneralSprint": {"all": {"sprintTeam": {"local": [7, 9, 8, 14, 12, 13, 9, 11, 11, 11, 15, 27, 15, 10], "global": [1, 4, 3, 4, 6, 6, 9, 5, 7, 7, 4, 8, 8, 2]}, "estadoBySprint": {"Accepted": [8, 11, 9, 17, 14, 14, 13, 11, 16, 13, 7, 12, 3, 1], "Discarded": [0, 1, 1, 1, 2, 5, 4, 3, 1, 4, 3, 2, 2, 1], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 2, 3], "Blocked": [0, 1, 1, 0, 2, 0, 1, 0, 0, 0, 2, 5, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 4, 2], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 3, 3], "In Progress": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 4, 2, 1], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 4, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1], "Deployed": [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0]}, "gap": {"totals": [8, 12, 10, 18, 16, 19, 17, 14, 17, 17, 12, 17, 9, 4], "totalPerSprint": [8, 13, 11, 18, 18, 19, 18, 16, 18, 18, 19, 36, 23, 12], "pct": [100.0, 92.3, 90.9, 100.0, 88.9, 100.0, 94.4, 87.5, 94.4, 94.4, 63.2, 47.2, 39.1, 33.3]}}, "local": {"sprintTeam": {"local": [7, 9, 8, 14, 12, 13, 9, 11, 11, 11, 15, 27, 15, 10], "global": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "estadoBySprint": {"Accepted": [7, 8, 6, 13, 9, 11, 7, 9, 10, 8, 4, 10, 3, 0], "Discarded": [0, 1, 1, 1, 2, 2, 2, 1, 1, 3, 3, 2, 1, 1], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 1, 3], "Blocked": [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 2, 4, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 1], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3], "In Progress": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 3, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1], "Deployed": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0]}, "gap": {"totals": [7, 9, 7, 14, 11, 13, 9, 10, 11, 11, 9, 13, 4, 2], "totalPerSprint": [7, 9, 8, 14, 12, 13, 9, 11, 11, 11, 15, 27, 15, 10], "pct": [100.0, 100.0, 87.5, 100.0, 91.7, 100.0, 100.0, 90.9, 100.0, 100.0, 60.0, 48.1, 26.7, 20.0]}}, "global": {"sprintTeam": {"local": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "global": [1, 4, 3, 4, 6, 6, 9, 5, 7, 7, 4, 8, 8, 2]}, "estadoBySprint": {"Accepted": [1, 3, 3, 4, 5, 3, 6, 2, 6, 5, 3, 2, 0, 1], "Discarded": [0, 0, 0, 0, 0, 3, 2, 2, 0, 1, 0, 0, 1, 0], "New": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0], "Blocked": [0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0], "Ready To Verify": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 1], "Analysing": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0], "In Progress": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 2, 0, 0], "Ready": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "Test": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Deployed": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], "To Rework": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "gap": {"totals": [1, 3, 3, 4, 5, 6, 8, 4, 6, 6, 3, 4, 5, 2], "totalPerSprint": [1, 4, 3, 4, 6, 6, 9, 5, 7, 7, 4, 8, 8, 2], "pct": [100.0, 75.0, 100.0, 100.0, 83.3, 100.0, 88.9, 80.0, 85.7, 85.7, 75.0, 50.0, 62.5, 100.0]}}}};
+
+
+let TEAM_DIST = { local: 190, global: 82, other: 1, total: 273 };
+const ESTADO_COLORS = {
+  Accepted: '#0ca30c', Discarded: '#e34948', New: '#4a3aa7', Blocked: '#d03b3b',
+  'Ready To Verify': '#1baf7a', Analysing: '#eda100', 'In Progress': '#eb6834',
+  Ready: '#008300', Test: '#e87ba4', Deployed: '#898781', 'To Rework': '#c3c2b7'
+};
+const ESTADO_BADGE = {
+  Accepted: ['#D1FAE5','#065F46'], Discarded: ['#FEE2E2','#991B1B'], New: ['#EDE9FE','#4C1D95'],
+  Blocked: ['#FEE2E2','#7F1D1D'], 'Ready To Verify': ['#E0F2FE','#075985'], Analysing: ['#FEF3C7','#92400E'],
+  'In Progress': ['#FFEDD5','#9A3412'], Ready: ['#ECFDF5','#065F46'], Test: ['#F3E8FF','#6B21A8'],
+  Deployed: ['#DBEAFE','#1E40AF'], 'To Rework': ['#FFF7ED','#9A3412']
+};
+
+const SPRINT_ORDER = ['Q1   Sprint 1','Q1   Sprint 2','Q1   Sprint 3','Q1   Sprint 4','Q1   Sprint 5','Q1   Sprint 6','Q2   Sprint 1','Q2   Sprint 2','Q2   Sprint 3','Q2   Sprint 4','Q2   Sprint 5','Q2   Sprint 6+St','Q3   Sprint 1','Q3   Sprint 2'];
+const ESTADOS = ['Accepted','Discarded','New','Blocked','Ready To Verify','Analysing','In Progress','Ready','Test','Deployed','To Rework'];
+
+function sprintLabelsFrom(order) {
+  return order.map(s => s.replace(/\s+/g, ' '));
+}
+
+function trim(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).trim();
+}
+
+function buildTeamMaps(equipoRows) {
+  const localSeen = new Set();
+  const globalSeen = new Set();
+  const localOrdered = [];
+  equipoRows.forEach(r => {
+    const l = trim(r['Local']);
+    const g = trim(r['Global']);
+    if (l && !localSeen.has(l)) { localSeen.add(l); localOrdered.push(l); }
+    if (g) globalSeen.add(g);
+  });
+  return { localSet: localSeen, globalSet: globalSeen, localOrdered };
+}
+
+function teamOf(persona, maps) {
+  const p = trim(persona);
+  if (maps.localSet.has(p)) return 'local';
+  if (maps.globalSet.has(p)) return 'global';
+  return 'other';
+}
+
+function filterByTeam(rows, team) {
+  if (team === 'all') return rows;
+  return rows.filter(r => r.__team === team);
+}
+
+function countBy(rows, keyFn) {
+  const m = {};
+  rows.forEach(r => {
+    const k = keyFn(r);
+    if (k === null || k === undefined) return;
+    m[k] = (m[k] || 0) + 1;
+  });
+  return m;
+}
+
+function estadoCounts(rows) {
+  const c = countBy(rows, r => r['Estado']);
+  const out = {};
+  ESTADOS.forEach(e => out[e] = c[e] || 0);
+  return out;
+}
+
+function sprintCountsFor(rows, sprintKey) {
+  const c = countBy(rows, r => trim(r[sprintKey]));
+  return SPRINT_ORDER.map(s => c[s] || 0);
+}
+
+function estadoBySprintPivot(rows, sprintKey) {
+  const out = {};
+  ESTADOS.forEach(e => out[e] = new Array(SPRINT_ORDER.length).fill(0));
+  rows.forEach(r => {
+    const s = trim(r[sprintKey]);
+    const idx = SPRINT_ORDER.indexOf(s);
+    if (idx === -1) return;
+    const e = r['Estado'];
+    if (out[e]) out[e][idx] += 1;
+  });
+  return out;
+}
+
+function buildEstatusGeneralLike(rowsWithSprintInOrder, sprintKey, team) {
+  const sub = filterByTeam(rowsWithSprintInOrder, team);
+  const localArr = sprintCountsFor(sub.filter(r => r.__team === 'local'), sprintKey);
+  const globalArr = sprintCountsFor(sub.filter(r => r.__team === 'global'), sprintKey);
+  const estadoBySprint = estadoBySprintPivot(sub, sprintKey);
+  const acc = estadoBySprint['Accepted'], disc = estadoBySprint['Discarded'], rtv = estadoBySprint['Ready To Verify'];
+  const gapTotals = acc.map((a, i) => a + disc[i] + rtv[i]);
+  const totalPerSprint = sprintCountsFor(sub, sprintKey);
+  const gapPct = gapTotals.map((g, i) => totalPerSprint[i] > 0 ? Math.round((g / totalPerSprint[i]) * 1000) / 10 : 0);
+  return {
+    sprintTeam: { local: localArr, global: globalArr },
+    estadoBySprint,
+    gap: { totals: gapTotals, totalPerSprint, pct: gapPct }
+  };
+}
+
+function buildGroupLike(rows, sprintKey, team) {
+  const inOrder = rows.filter(r => SPRINT_ORDER.includes(trim(r[sprintKey])));
+  const s = filterByTeam(inOrder, team);
+  const localArr = sprintCountsFor(s.filter(r => r.__team === 'local'), sprintKey);
+  const globalArr = sprintCountsFor(s.filter(r => r.__team === 'global'), sprintKey);
+  const estadoData = estadoBySprintPivot(s, sprintKey);
+  return { local: localArr, global: globalArr, estados: estadoData, count: s.length };
+}
+
+function delayDist(rows, team) {
+  const filtered = filterByTeam(rows, team).filter(r => (r['homework delay'] || 0) > 0);
+  const counts = {};
+  filtered.forEach(r => {
+    const v = Math.trunc(r['homework delay']);
+    counts[v] = (counts[v] || 0) + 1;
+  });
+  const keys = Object.keys(counts).map(Number).sort((a, b) => a - b);
+  return {
+    labels: keys.map(k => `${k} sprint${k > 1 ? 's' : ''}`),
+    values: keys.map(k => counts[k]),
+    n: filtered.length
+  };
+}
+
+function hasValidClave(r) {
+  const v = r && r['Clave'];
+  return v !== null && v !== undefined && String(v).trim() !== '';
+}
+
+function computeDashboardData(rowsGeneralRaw, rowsSprintRaw, rowsEquipoRaw) {
+  const maps = buildTeamMaps(rowsEquipoRaw);
+
+  // Excel a menudo aplica formato a filas vacías más allá de los datos reales.
+  // SheetJS las incluye igual; se descartan aquí para no inflar los conteos.
+  const rowsGeneral = rowsGeneralRaw
+    .filter(hasValidClave)
+    .map(r => ({
+      ...r,
+      __team: teamOf(r['Persona asignada'], maps),
+      'homework delay': r['homework delay'] || 0
+    }));
+  const rowsSprint = rowsSprintRaw
+    .filter(hasValidClave)
+    .map(r => ({
+      ...r,
+      __team: teamOf(r['Persona asignada'], maps)
+    }));
+
+  const out = {};
+
+  const totalAll = rowsGeneral.length;
+  const totalLocal = rowsGeneral.filter(r => r.__team === 'local').length;
+  const totalGlobal = rowsGeneral.filter(r => r.__team === 'global').length;
+  const subSprintG = rowsGeneral.filter(r => SPRINT_ORDER.includes(trim(r['sprint'])));
+  out.totals = {
+    all: { total: totalAll, withSprint: subSprintG.length },
+    local: { total: totalLocal, withSprint: subSprintG.filter(r => r.__team === 'local').length },
+    global: { total: totalGlobal, withSprint: subSprintG.filter(r => r.__team === 'global').length }
+  };
+
+  out.estados = {
+    all: estadoCounts(rowsGeneral),
+    local: estadoCounts(rowsGeneral.filter(r => r.__team === 'local')),
+    global: estadoCounts(rowsGeneral.filter(r => r.__team === 'global'))
+  };
+
+  out.estatusGeneral = {};
+  ['all', 'local', 'global'].forEach(t => {
+    out.estatusGeneral[t] = buildEstatusGeneralLike(subSprintG, 'sprint', t);
+  });
+
+  const subSprintS = rowsSprint.filter(r => SPRINT_ORDER.includes(trim(r['Sprint'])));
+  out.estatusGeneralSprint = {};
+  ['all', 'local', 'global'].forEach(t => {
+    out.estatusGeneralSprint[t] = buildEstatusGeneralLike(subSprintS, 'Sprint', t);
+  });
+
+  const analisisRegex = /an[aá]lisis/i;
+  const validacionRegex = /validaci[oó]n/i;
+
+  const analisisG = rowsGeneral.filter(r => analisisRegex.test(r['Resumen'] || ''));
+  const validacionG = rowsGeneral.filter(r => validacionRegex.test(r['Resumen'] || ''));
+  out.analisis = {};
+  out.validacion = {};
+  ['all', 'local', 'global'].forEach(t => {
+    out.analisis[t] = buildGroupLike(analisisG, 'sprint', t);
+    out.validacion[t] = buildGroupLike(validacionG, 'sprint', t);
+  });
+
+  const analisisDelay = rowsGeneral.filter(r => analisisRegex.test(r['Resumen'] || ''));
+  const validacionDelay = rowsGeneral.filter(r => validacionRegex.test(r['Resumen'] || ''));
+  out.delayAnalisis = {};
+  out.delayValidacion = {};
+  ['all', 'local', 'global'].forEach(t => {
+    out.delayAnalisis[t] = delayDist(analisisDelay, t);
+    out.delayValidacion[t] = delayDist(validacionDelay, t);
+  });
+
+  const subLocal = subSprintS.filter(r => r.__team === 'local');
+  const personTotals = {};
+  const personEstados = {};
+  maps.localOrdered.forEach(p => {
+    const psub = subLocal.filter(r => trim(r['Persona asignada']) === p);
+    personTotals[p] = sprintCountsFor(psub, 'Sprint');
+    const pivot = estadoBySprintPivot(psub, 'Sprint');
+    const pe = {};
+    ESTADOS.forEach(e => {
+      if (pivot[e].some(v => v > 0)) pe[e] = pivot[e];
+    });
+    personEstados[p] = pe;
+  });
+  out.localPeople = { names: maps.localOrdered, totals: personTotals, estados: personEstados };
+  out.localTotal = subLocal.length;
+
+  out.sprintOrder = SPRINT_ORDER;
+  out.sprintLabels = sprintLabelsFrom(SPRINT_ORDER);
+  out.estadosList = ESTADOS;
+
+  const teamDistOther = rowsGeneral.filter(r => r.__team === 'other').length;
+  out.teamDist = { local: totalLocal, global: totalGlobal, other: teamDistOther, total: totalAll };
+
+  return out;
+}
+
+
+
+
+function findSheetName(workbook, keywords) {
+  for (const name of workbook.SheetNames) {
+    const lower = name.toLowerCase();
+    if (keywords.some(k => lower.includes(k))) return name;
+  }
+  return null;
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('uploadStatus');
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Leyendo ' + file.name + '...';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+
+      const generalName = findSheetName(wb, ['general']);
+      const sprintName = findSheetName(wb, ['spring', 'sprint']);
+      const equipoName = findSheetName(wb, ['equipo']);
+
+      if (!generalName || !sprintName || !equipoName) {
+        throw new Error('No se encontraron las 3 hojas esperadas (estatus general, estatus por sprint, equipo). Encontradas: ' + wb.SheetNames.join(', '));
+      }
+
+      const rowsGeneral = XLSX.utils.sheet_to_json(wb.Sheets[generalName], { defval: null });
+      const rowsSprint = XLSX.utils.sheet_to_json(wb.Sheets[sprintName], { defval: null });
+      const rowsEquipo = XLSX.utils.sheet_to_json(wb.Sheets[equipoName], { defval: null });
+
+      const newData = computeDashboardData(rowsGeneral, rowsSprint, rowsEquipo);
+      DATA = newData;
+      TEAM_DIST = newData.teamDist;
+
+      currentTeam = 'all';
+      document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.team-btn[data-team="all"]').classList.add('active');
+      currentPerson = 'all';
+
+      renderAll();
+
+      const now = new Date();
+      const stamp = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+      const realCount = newData.totals.all.total;
+      const discarded = rowsGeneral.length - realCount;
+      let msg = 'Cargado: ' + file.name + ' · ' + stamp + ' · ' + realCount + ' tareas';
+      if (discarded > 0) msg += ' (' + discarded + ' filas vacías/formato ignoradas)';
+      statusEl.className = 'upload-status success';
+      statusEl.textContent = msg;
+    } catch (err) {
+      statusEl.className = 'upload-status error';
+      statusEl.textContent = 'Error al leer el archivo: ' + err.message;
+      console.error(err);
+    }
+  };
+  reader.onerror = function() {
+    statusEl.className = 'upload-status error';
+    statusEl.textContent = 'No se pudo leer el archivo.';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+let currentTeam = 'all';
+const charts = {};
+
+function destroy(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderTotals() {
+  const t = DATA.totals[currentTeam];
+  document.getElementById('kSprintTotal').textContent = t.withSprint;
+  document.getElementById('kAllTotal').textContent = t.total;
+}
+
+function renderEstadoCards() {
+  const estados = DATA.estados[currentTeam];
+  const total = DATA.totals[currentTeam].total;
+  const grid = document.getElementById('estadoCards');
+  grid.innerHTML = '';
+  DATA.estadosList.forEach(e => {
+    const count = estados[e] || 0;
+    if (count === 0) return;
+    const [bg, fg] = ESTADO_BADGE[e];
+    const pct = total > 0 ? ((count/total)*100).toFixed(1) : '0.0';
+    const div = document.createElement('div');
+    div.className = 'e-card';
+    div.style.background = bg;
+    div.innerHTML = `<div class="e-label" style="color:${fg}">${e}</div><div class="e-count" style="color:${fg}">${count}</div><div class="e-pct" style="color:${fg}">${pct}%</div>`;
+    grid.appendChild(div);
+  });
+}
+
+function buildLegend(containerId, items) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  items.forEach(({label, color}) => {
+    const span = document.createElement('span');
+    span.innerHTML = `<span class="dot" style="background:${color}"></span>${label}`;
+    el.appendChild(span);
+  });
+}
+
+function totalLabelPlugin(localArr, globalArr) {
+  return {
+    id: 'totalLabel',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      ctx.save();
+      ctx.font = '600 11px sans-serif';
+      ctx.fillStyle = '#52514e';
+      ctx.textAlign = 'center';
+      const meta0 = chart.getDatasetMeta(0);
+      const meta1 = chart.getDatasetMeta(1);
+      localArr.forEach((v, i) => {
+        const t = v + globalArr[i];
+        if (t === 0) return;
+        const bar0 = meta0.data[i];
+        const bar1 = meta1.data[i];
+        const topY = Math.min(bar0.y, bar1.y);
+        ctx.fillText(t, bar0.x, topY - 6);
+      });
+      ctx.restore();
+    }
+  };
+}
+
+const pointValuePlugin = {
+  id: 'pointValue',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = '400 9px sans-serif';
+    ctx.textAlign = 'center';
+    chart.data.datasets.forEach((ds, i) => {
+      if (ds.type !== 'line') return;
+      const meta = chart.getDatasetMeta(i);
+      ctx.fillStyle = ds.borderColor;
+      meta.data.forEach((point, idx) => {
+        const v = ds.data[idx];
+        if (v > 0) ctx.fillText(v, point.x, point.y - 8);
+      });
+    });
+    ctx.restore();
+  }
+};
+
+function buildComboChart(canvasId, localArr, globalArr, estadosObj, legendId, team) {
+  destroy(canvasId);
+  const estadoList = DATA.estadosList.filter(e => estadosObj[e] && estadosObj[e].some(v => v > 0));
+
+  let barDatasets;
+  let legendItems = [];
+  if (team === 'all') {
+    barDatasets = [
+      { type: 'bar', label: 'Local', data: localArr, backgroundColor: 'rgba(127,168,217,0.8)', borderRadius: 4, stack: 'team', order: 2 },
+      { type: 'bar', label: 'Global', data: globalArr, backgroundColor: 'rgba(127,203,170,0.8)', borderRadius: 4, stack: 'team', order: 2 }
+    ];
+    legendItems.push({ label: 'Local', color: 'rgba(127,168,217,0.8)' }, { label: 'Global', color: 'rgba(127,203,170,0.8)' });
+  } else if (team === 'local') {
+    barDatasets = [{ type: 'bar', label: 'Local', data: localArr, backgroundColor: 'rgba(127,168,217,0.8)', borderRadius: 4, stack: 'team', order: 2 }];
+    legendItems.push({ label: 'Local', color: 'rgba(127,168,217,0.8)' });
+  } else {
+    barDatasets = [{ type: 'bar', label: 'Global', data: globalArr, backgroundColor: 'rgba(127,203,170,0.8)', borderRadius: 4, stack: 'team', order: 2 }];
+    legendItems.push({ label: 'Global', color: 'rgba(127,203,170,0.8)' });
+  }
+  legendItems.push(...estadoList.map(e => ({ label: e, color: ESTADO_COLORS[e] })));
+  buildLegend(legendId, legendItems);
+
+  const lineDatasets = estadoList.map(e => ({
+    type: 'line', label: e, data: estadosObj[e],
+    borderColor: ESTADO_COLORS[e], backgroundColor: ESTADO_COLORS[e],
+    borderWidth: e === 'Accepted' ? 3 : 2,
+    pointRadius: e === 'Accepted' ? 3 : 2,
+    tension: 0.25, fill: false, order: e === 'Accepted' ? 0 : 1
+  }));
+
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    data: { labels: DATA.sprintLabels, datasets: [...barDatasets, ...lineDatasets] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 20 } },
+      scales: {
+        x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 45, font: { size: 10 } } },
+        y: { grid: { color: '#e1e0d9' }, beginAtZero: true, ticks: { precision: 0 } }
+      },
+      plugins: { legend: { display: false } }
+    },
+    plugins: [totalLabelPlugin(localArr, globalArr), pointValuePlugin]
+  });
+}
+
+function renderEstatusGeneral() {
+  const d = DATA.estatusGeneral[currentTeam];
+  buildComboChart('chartEstatusGeneral', d.sprintTeam.local, d.sprintTeam.global, d.estadoBySprint, 'legendEstatusGeneral', currentTeam);
+}
+
+function renderGap() {
+  const gap = DATA.estatusGeneral[currentTeam].gap;
+  const grid = document.getElementById('gapMiniCards');
+  grid.innerHTML = '';
+  DATA.sprintLabels.forEach((label, i) => {
+    const pct = gap.pct[i];
+    const total = gap.totalPerSprint[i];
+    const g = gap.totals[i];
+    let bg, fg;
+    if (pct >= 80) { bg = '#D1FAE5'; fg = '#065F46'; }
+    else if (pct >= 50) { bg = '#FEF3C7'; fg = '#92400E'; }
+    else { bg = '#FEE2E2'; fg = '#7F1D1D'; }
+    const div = document.createElement('div');
+    div.className = 'gap-cell';
+    div.style.background = bg;
+    div.innerHTML = `<div class="g-label" style="color:${fg}">${label}</div><div class="g-pct" style="color:${fg}">${pct}%</div><div class="g-frac" style="color:${fg}">${g}/${total}</div>`;
+    grid.appendChild(div);
+  });
+
+  destroy('chartGap');
+  charts['chartGap'] = new Chart(document.getElementById('chartGap'), {
+    type: 'bar',
+    data: { labels: DATA.sprintLabels, datasets: [{ label: 'Total', data: gap.totals, backgroundColor: 'rgba(42,120,214,0.7)', borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 20 } },
+      scales: {
+        x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 45, font: { size: 10 } } },
+        y: { grid: { color: '#e1e0d9' }, beginAtZero: true, ticks: { precision: 0 } }
+      },
+      plugins: { legend: { display: false } }
+    },
+    plugins: [{
+      id: 'gapTotalLabel',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        ctx.save();
+        ctx.font = '600 11px sans-serif';
+        ctx.fillStyle = '#52514e';
+        ctx.textAlign = 'center';
+        const meta = chart.getDatasetMeta(0);
+        gap.totals.forEach((t, i) => {
+          if (t === 0) return;
+          const bar = meta.data[i];
+          ctx.fillText(t, bar.x, bar.y - 6);
+        });
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+
+function renderEstatusGeneralSprint() {
+  const d = DATA.estatusGeneralSprint[currentTeam];
+  buildComboChart('chartEstatusGeneralSprint', d.sprintTeam.local, d.sprintTeam.global, d.estadoBySprint, 'legendEstatusGeneralSprint', currentTeam);
+}
+
+function renderGapSprint() {
+  const gap = DATA.estatusGeneralSprint[currentTeam].gap;
+  const grid = document.getElementById('gapMiniCardsSprint');
+  grid.innerHTML = '';
+  DATA.sprintLabels.forEach((label, i) => {
+    const pct = gap.pct[i];
+    const total = gap.totalPerSprint[i];
+    const g = gap.totals[i];
+    let bg, fg;
+    if (pct >= 80) { bg = '#D1FAE5'; fg = '#065F46'; }
+    else if (pct >= 50) { bg = '#FEF3C7'; fg = '#92400E'; }
+    else { bg = '#FEE2E2'; fg = '#7F1D1D'; }
+    const div = document.createElement('div');
+    div.className = 'gap-cell';
+    div.style.background = bg;
+    div.innerHTML = `<div class="g-label" style="color:${fg}">${label}</div><div class="g-pct" style="color:${fg}">${pct}%</div><div class="g-frac" style="color:${fg}">${g}/${total}</div>`;
+    grid.appendChild(div);
+  });
+
+  destroy('chartGapSprint');
+  charts['chartGapSprint'] = new Chart(document.getElementById('chartGapSprint'), {
+    type: 'bar',
+    data: { labels: DATA.sprintLabels, datasets: [{ label: 'Total', data: gap.totals, backgroundColor: 'rgba(42,120,214,0.7)', borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 20 } },
+      scales: {
+        x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 45, font: { size: 10 } } },
+        y: { grid: { color: '#e1e0d9' }, beginAtZero: true, ticks: { precision: 0 } }
+      },
+      plugins: { legend: { display: false } }
+    },
+    plugins: [{
+      id: 'gapSprintTotalLabel',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        ctx.save();
+        ctx.font = '600 11px sans-serif';
+        ctx.fillStyle = '#52514e';
+        ctx.textAlign = 'center';
+        const meta = chart.getDatasetMeta(0);
+        gap.totals.forEach((t, i) => {
+          if (t === 0) return;
+          const bar = meta.data[i];
+          ctx.fillText(t, bar.x, bar.y - 6);
+        });
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+function renderAnalisisValidacion() {
+  const a = DATA.analisis[currentTeam];
+  const v = DATA.validacion[currentTeam];
+  document.getElementById('subAnalisis').textContent = a.count + ' tareas cuyo resumen contiene "análisis"';
+  document.getElementById('subValidacion').textContent = v.count + ' tareas cuyo resumen contiene "validación"';
+  buildComboChart('chartAnalisis', a.local, a.global, a.estados, null, currentTeam);
+  buildComboChart('chartValidacion', v.local, v.global, v.estados, null, currentTeam);
+}
+
+let currentPerson = 'all';
+
+function shortName(p) {
+  const parts = p.split(' ');
+  return parts.length > 2 ? parts[0] + ' ' + parts[1] : p;
+}
+
+const PERSON_COLORS = ['#1baf7a', '#eda100', '#2a78d6', '#e34948', '#9085e9', '#eb6834', '#4a3aa7'];
+
+function buildPersonDatasets(person) {
+  if (person === 'all') {
+    return DATA.localPeople.names.map((p, i) => ({
+      label: shortName(p), data: DATA.localPeople.totals[p], backgroundColor: PERSON_COLORS[i % PERSON_COLORS.length], borderRadius: 3
+    }));
+  }
+  const estados = DATA.localPeople.estados[person];
+  return Object.keys(estados).map(e => ({
+    label: e, data: estados[e], backgroundColor: ESTADO_COLORS[e], borderRadius: 3
+  }));
+}
+
+function buildPersonLegend(person) {
+  if (person === 'all') {
+    return DATA.localPeople.names.map((p, i) => ({ label: shortName(p), color: PERSON_COLORS[i % PERSON_COLORS.length] }));
+  }
+  const estados = DATA.localPeople.estados[person];
+  return Object.keys(estados).map(e => ({ label: e, color: ESTADO_COLORS[e] }));
+}
+
+const valueLabelPlugin = {
+  id: 'valueLabel',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = '600 10px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    chart.data.datasets.forEach((ds, i) => {
+      const meta = chart.getDatasetMeta(i);
+      meta.data.forEach((bar, idx) => {
+        const v = ds.data[idx];
+        if (v > 0) ctx.fillText(v, bar.x, bar.y + bar.height / 2);
+      });
+    });
+    ctx.restore();
+  }
+};
+
+function renderPersonChart() {
+  destroy('chartPerson');
+  buildLegend('legendPerson', buildPersonLegend(currentPerson));
+  charts['chartPerson'] = new Chart(document.getElementById('chartPerson'), {
+    type: 'bar',
+    data: { labels: DATA.sprintLabels, datasets: buildPersonDatasets(currentPerson) },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, font: { size: 10 } } },
+        y: { stacked: true, grid: { color: '#e1e0d9' }, beginAtZero: true, ticks: { precision: 0 } }
+      },
+      plugins: { legend: { display: false } }
+    },
+    plugins: [valueLabelPlugin]
+  });
+  const total = currentPerson === 'all' ? DATA.localTotal : DATA.localPeople.totals[currentPerson].reduce((a,b)=>a+b,0);
+  document.getElementById('localRecordCount').textContent = total + ' registros';
+}
+
+function setPerson(person, btn) {
+  currentPerson = person;
+  document.querySelectorAll('.person-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPersonChart();
+}
+
+function initPersonButtons() {
+  const container = document.getElementById('personBtns');
+  container.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'person-btn active';
+  allBtn.textContent = 'Todos';
+  allBtn.onclick = () => setPerson('all', allBtn);
+  container.appendChild(allBtn);
+  DATA.localPeople.names.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'person-btn';
+    btn.textContent = shortName(p);
+    btn.onclick = () => setPerson(p, btn);
+    container.appendChild(btn);
+  });
+}
+
+function renderDelayCharts() {
+  const da = DATA.delayAnalisis[currentTeam];
+  const dv = DATA.delayValidacion[currentTeam];
+  document.getElementById('subDelayAnalisis').textContent = 'Distribución de días de retraso · ' + da.n + ' tareas';
+  document.getElementById('subDelayValidacion').textContent = 'Distribución de días de retraso · ' + dv.n + ' tareas';
+
+  function renderOne(canvasId, dist, baseColor, highlightColor) {
+    destroy(canvasId);
+    if (!dist.values.length) return;
+    const maxIdx = dist.values.indexOf(Math.max(...dist.values));
+    const colors = dist.values.map((_, i) => i === maxIdx ? highlightColor : baseColor);
+    charts[canvasId] = new Chart(document.getElementById(canvasId), {
+      type: 'bar',
+      data: { labels: dist.labels, datasets: [{ data: dist.values, backgroundColor: colors, borderRadius: 4 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 20 } },
+        scales: {
+          x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 45, font: { size: 10 } } },
+          y: { grid: { color: '#e1e0d9' }, beginAtZero: true, ticks: { precision: 0 } }
+        },
+        plugins: { legend: { display: false } }
+      },
+      plugins: [{
+        id: 'delayValueLabel',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          ctx.save();
+          ctx.font = '600 11px sans-serif';
+          ctx.fillStyle = '#52514e';
+          ctx.textAlign = 'center';
+          const meta = chart.getDatasetMeta(0);
+          dist.values.forEach((v, i) => {
+            const bar = meta.data[i];
+            ctx.fillText(v, bar.x, bar.y - 6);
+          });
+          ctx.restore();
+        }
+      }]
+    });
+  }
+
+  renderOne('chartDelayAnalisis', da, 'rgba(42,120,214,0.35)', 'rgba(12,73,158,0.9)');
+  renderOne('chartDelayValidacion', dv, 'rgba(27,175,122,0.35)', 'rgba(8,80,65,0.9)');
+}
+
+
+function renderTeamDist() {
+  destroy('chartTeamDist');
+  const items = [
+    { label: 'Local', value: TEAM_DIST.local, color: '#2a78d6' },
+    { label: 'Global', value: TEAM_DIST.global, color: '#1baf7a' }
+  ];
+  buildLegend('legendTeamDist', items.map(i => ({ label: `${i.label} — ${i.value} (${(i.value/TEAM_DIST.total*100).toFixed(0)}%)`, color: i.color })));
+  charts['chartTeamDist'] = new Chart(document.getElementById('chartTeamDist'), {
+    type: 'doughnut',
+    data: {
+      labels: items.map(i => i.label),
+      datasets: [{ data: items.map(i => i.value), backgroundColor: items.map(i => i.color), borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function setGlobalTeam(team, btn) {
+  currentTeam = team;
+  document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTotals();
+  renderEstadoCards();
+  renderEstatusGeneral();
+  renderGap();
+  renderEstatusGeneralSprint();
+  renderGapSprint();
+  renderAnalisisValidacion();
+  renderDelayCharts();
+}
+
+function renderAll() {
+  renderTeamDist();
+  renderTotals();
+  renderEstadoCards();
+  renderEstatusGeneral();
+  renderGap();
+  renderEstatusGeneralSprint();
+  renderGapSprint();
+  renderAnalisisValidacion();
+  initPersonButtons();
+  renderPersonChart();
+  renderDelayCharts();
+}
+
+renderAll();
+</script>
+
+
+</body></html>
